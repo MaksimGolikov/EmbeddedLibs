@@ -1,6 +1,5 @@
 /*
  * drv_UART.h
- *
  *  Created on: 2 лют. 2018 р.
  *      Author: MaGol
  */
