@@ -9,17 +9,29 @@
 #include "Common/DataBase/Database_configuration.h"
 #include "Common/DataBase/Database_describe.h"
 #include "DRV/w25q32bv.h"
+#include <string.h>
+
+
+
+
+uint8_t GetIdInDatabase(DB_Field_t field);
+
 
 
 
 void Database_Init(void){
 
-	for(uint8_t i = 0; i < FINISH_FLASH; i ++){
-		sFLASH_ReadBuffer(&Database[i].Value, Database[i].AddressInFlash, (uint16_t*)Database[i].Type);
+	for(uint8_t i = 0; i < DB_field_Amount; i ++){
 
-		if( (Database[i].Value < Database[i].MinValue) ||
-			(Database[i].Value > Database[i].MaxValue)){
-			 Database[i].Value = Database[i].DefaultValue;
+		if(i < FINISH_FLASH){
+			sFLASH_ReadBuffer(&Database[i].Value, Database[i].AddressInFlash, (uint16_t)Database[i].Type);
+
+					if( (Database[i].Value < Database[i].MinValue) ||
+						(Database[i].Value > Database[i].MaxValue)){
+						 Database[i].Value = Database[i].DefaultValue;
+					}
+		}else{
+			Database_SetDefaultIn(i);
 		}
 	}
 }
@@ -29,17 +41,24 @@ DB_Message_t Database_ChangeFeild(DB_Field_t field, void *value, uint16_t sizeDa
 	DB_Message_t result = db_OperationError;
 
 	if ((field < DB_field_Amount) && (value != NULL)) {
-		if ((sizeData >= Database[field].MinValue)
-				&& (sizeData <= Database[field].MaxValue)) {
+		uint8_t index = GetIdInDatabase(field);
+		if (index != NULL) {
+			uint32_t currentData;
+			Database_ReadField(index, &currentData);
 
-			 Database[field].Value = value;
+			if ((sizeData >= Database[index].MinValue)
+					&& (sizeData <= Database[index].MaxValue)
+					&& (currentData != Database[index].Value)) {
 
-			if (Database[field].Callback != NULL) {
+				memcpy(&Database[index].Value, value, sizeData);
 
-				Database[field].Callback(Database[field].AddressInFlash,
-						Database[field].Value, Database[field].Type);
+				if (Database[index].Callback != NULL) {
+
+					Database[index].Callback(Database[index].AddressInFlash,
+							Database[index].Value, Database[index].Type);
+				}
+				result = db_OperationDone;
 			}
-			result = db_OperationDone;
 		}
 	}
 
@@ -51,8 +70,11 @@ DB_Message_t Database_ReadField(DB_Field_t field, void *value) {
 	DB_Message_t result = db_OperationError;
 
 	if ((field < DB_field_Amount) && (value != NULL)) {
-		value = Database[field].Value;
-		result = db_OperationDone;
+		uint8_t index = GetIdInDatabase(field);
+		if (index != NULL) {
+			memcpy(value, &Database[index].Value, (uint16_t) Database[index].Type);
+			result = db_OperationDone;
+		}
 	}
 	return result;
 }
@@ -62,8 +84,11 @@ DB_Message_t Database_ReadMin(DB_Field_t field, void *value) {
 	DB_Message_t result = db_OperationError;
 
 	if ((field < DB_field_Amount) && (value != NULL)) {
-		value =  Database[field].MinValue;
-		result = db_OperationDone;
+		uint8_t index = GetIdInDatabase(field);
+		if(index != NULL){
+			memcpy(value, &Database[index].MinValue, (uint16_t)Database[index].Type);
+			result = db_OperationDone;
+		}
 	}
 	return result;
 }
@@ -73,8 +98,11 @@ DB_Message_t Database_ReadMax(DB_Field_t field, void *value){
 	DB_Message_t result = db_OperationError;
 
 	if ((field < DB_field_Amount) && (value != NULL)) {
-		value = Database[field].MaxValue;
-		result = db_OperationDone;
+		uint8_t index = GetIdInDatabase(field);
+		if(index != NULL){
+			memcpy(value, &Database[index].MaxValue, (uint16_t)Database[index].Type);
+			result = db_OperationDone;
+		}
 	}
 	return result;
 }
@@ -94,8 +122,29 @@ DB_Message_t Database_SetDefaultIn(DB_Field_t field) {
 	DB_Message_t result = db_OperationError;
 
 	if (field < DB_field_Amount) {
-		Database[field].Value = Database[field].DefaultValue;
-		result = db_OperationDone;
+		uint8_t index = GetIdInDatabase(field);
+		if (index != NULL) {
+			Database[index].Value = Database[index].DefaultValue;
+			result = db_OperationDone;
+		}
 	}
 	return result;
 }
+
+
+
+
+
+uint8_t GetIdInDatabase(DB_Field_t field){
+	uint8_t result = NULL;
+
+	for(uint8_t i = 0; i < DB_field_Amount; i++){
+		if(Database[i].FieldName == field){
+			result = i;
+			break;
+		}
+	}
+
+	return result;
+}
+

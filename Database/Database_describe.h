@@ -11,14 +11,15 @@
 
 
 typedef enum{
-	ID,
-	COLOR,
+	//ID,
+	/*COLOR,
 	INVULNERABILITY_TIME,
 	HEALTH,
 	HEADBAND_VIBRO_TIME,
 	SHOCK_TIME,
 	SOUND_VOLUME,
 	FRIENDLY_FIRE,
+	USED_SERVER,
 //===STATISTIC
 	RESPOWNS_NUMBER,
 	KILLS_NUMBER,
@@ -36,11 +37,13 @@ typedef enum{
 	SHOTS_IN_AUTOMOD_TOMMY_GUN,
 	CLIPS_NUMBER_TOMMY_GUN,
 	AMMO_NUMBER_TOMMY_GUN,
-	AUTORESPOUN_TIME_TOMMY_GUN,
+	AUTORESPOUN_TIME_TOMMY_GUN,*/
 //===============================
 	FINISH_FLASH,
 //=====GAME
-	GAME_MODE,
+	prm_GameMode,
+    prm_PowerButtonEvent,
+	prm_TriggerButtonEvent,
 
 	DB_field_Amount
 }DB_Field_t;
