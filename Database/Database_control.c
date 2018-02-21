@@ -29,7 +29,11 @@ void Database_Init(void){
 			if(i < FINISH_FLASH ){
 				uint32_t addressFlash = Database[index].AddressInFlash;
 				if (addressFlash != 0) {
-					sFLASH_ReadBuffer((uint8_t*) Database[index].Value,	Database[index].AddressInFlash,	(uint16_t) Database[index].Type);
+					uint8_t read[Database[index].Type];
+					sFLASH_ReadBuffer(read, addressFlash, (uint16_t)Database[index].Type);
+					for(uint8_t i = 0; i < 9; i++){
+						Database[index].Value |= read[i] << ( (Database[index].Type * 8) - (i + 1)*8 );
+					}
 					if ((Database[index].Value < Database[index].MinValue)
 							|| (Database[index].Value > Database[index].MaxValue)) {
 						Database_SetDefaultIn(index);
