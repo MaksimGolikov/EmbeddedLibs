@@ -9,18 +9,17 @@
 #define COMMON_DATABASE_DATABASE_CALLBACKS_H_
 
 
-#include <Common/DataBase/Database_describe.h>
-#include "Common/DataBase/Database_configuration.h"
+#include <Common/DataBase/Database_control.h>
 #include "stdint.h"
 
 
 /**
  * @brief function for save value of parameter to DB
- * @param address - address in flash for write
- * @param value   - pointer to necessary value
- * @param type    - type of value
+ * @param address  - address in flash for write
+ * @param value    - pointer to necessary value
+ * @param sizeData - size of tent data
  */
-void Callback_SaveToFlash(uint32_t address, void *value, DB_DataTypes_t type);
+void Callback_SaveToFlash(uint32_t address, void *value, uint16_t sizeData);
 
 
 

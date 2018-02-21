@@ -7,17 +7,16 @@
 
 
 #include "Common/DataBase/Database_callbacks.h"
-#include "Common/DataBase/Database_control.h"
 #include "DRV/w25q32bv.h"
-
-#define MAX_SIZE_OF_FLASH_CELL     4
-
+#include <string.h>
 
 
-void Callback_SaveToFlash(uint32_t address, void *value, DB_DataTypes_t type) {
+void Callback_SaveToFlash(uint32_t address, void *value, uint16_t sizeData) {
 
 	if (value != NULL) {
-		sFLASH_RewriteData((uint8_t*)value, address, (uint16_t*)type);
+		uint8_t read[sizeData];
+		memcpy(read, value, sizeData);
+		sFLASH_RewriteData(read, address, sizeData);
 	}
 }
 
