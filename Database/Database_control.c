@@ -15,28 +15,32 @@
 
 #define INDEX_NOT_FOUND      0xFF
 
-uint8_t GetIdInDatabase(DB_Field_t field);
+uint8_t GetIdInDatabase(DB_Field_t parameter);
+
+
+
 
 
 
 
 void Database_Init(void){
 
-	for(uint8_t i = 0; i < DB_field_Amount; i ++){
-		uint8_t index = GetIdInDatabase(i);
-		if (index != INDEX_NOT_FOUND) {
-			Database_SetDefaultIn(index);
-			if(i < FINISH_FLASH ){
-				uint32_t addressFlash = Database[index].AddressInFlash;
+	for(uint8_t parameter = 0; parameter < DB_parameters_Amount; parameter ++){
+		uint8_t indexDB = GetIdInDatabase(parameter);
+		if (indexDB != INDEX_NOT_FOUND) {
+			Database_SetDefaultIn(parameter);
+			if(parameter < FINISH_FLASH ){
+				uint32_t addressFlash = Database[indexDB].AddressInFlash;
 				if (addressFlash != 0) {
-					uint8_t read[Database[index].Type];
-					sFLASH_ReadBuffer(read, addressFlash, (uint16_t)Database[index].Type);
-					for(uint8_t i = 0; i < Database[index].Type; i++){
-						Database[index].Value |= read[i] << ( (Database[index].Type * 8) - (i + 1)*8 );
+					convertType_t read;
+					sFLASH_ReadBuffer(read.mass, addressFlash, (uint16_t)Database[indexDB].Type);
+					Database[indexDB].Value = 0;
+					for(uint8_t i = 0; i < Database[indexDB].Type; i++){
+						Database[indexDB].Value |= read.mass[i] << ( (Database[indexDB].Type * 8) - (i + 1)*8 );
 					}
-					if ((Database[index].Value < Database[index].MinValue)
-							|| (Database[index].Value > Database[index].MaxValue)) {
-						Database_SetDefaultIn(index);
+					if ((Database[indexDB].Value < Database[indexDB].MinValue)
+							|| (Database[indexDB].Value > Database[indexDB].MaxValue)) {
+						Database_SetDefaultIn(indexDB);
 					}
 				}
 			}
@@ -47,25 +51,31 @@ void Database_Init(void){
 }
 
 
-DB_Message_t Database_ChangeFeild(DB_Field_t field, void *value, uint16_t sizeData) {
+DB_Message_t Database_ChangeFeild(DB_Field_t parameter, void *value, uint16_t sizeData) {
 	DB_Message_t result = db_OperationError;
+	uint8_t indexDB;
 
-	if ((field < DB_field_Amount) && (value != NULL)) {
-		uint8_t index = GetIdInDatabase(field);
-		if (index != INDEX_NOT_FOUND) {
-			uint32_t currentData;
-			Database_ReadField(index, &currentData);
+	if ((parameter < DB_parameters_Amount) && (value != NULL)) {
+		indexDB = GetIdInDatabase(parameter);
+		if (indexDB != INDEX_NOT_FOUND) {
+			convertType_t newData;
+			convertType_t currentData;
 
-			if ((sizeData >= Database[index].MinValue)
-					&& (sizeData <= Database[index].MaxValue)
-					&& (currentData != Database[index].Value)) {
+			Database_ReadField(indexDB, currentData.mass);
+			memcpy(newData.mass, value, sizeData);
 
-				memcpy(&Database[index].Value, value, sizeData);
+			if ((newData.data >= Database[indexDB].MinValue)
+					&& (newData.data <= Database[indexDB].MaxValue)
+					&& (newData.data != currentData.data)) {
+				memcpy(&Database[indexDB].Value, value, sizeData);
 
-				if (Database[index].Callback != NULL) {
+				if(indexDB < FINISH_FLASH){
+				   sFLASH_RewriteData(newData.mass, Database[indexDB].AddressInFlash, (uint16_t)Database[indexDB].Type);
+				}
 
-					Database[index].Callback(Database[index].AddressInFlash,
-							Database[index].Value, Database[index].Type);
+
+				if (Database[indexDB].Callback != NULL) {
+					Database[indexDB].Callback(parameter);
 				}
 				result = db_OperationDone;
 			}
@@ -76,13 +86,14 @@ DB_Message_t Database_ChangeFeild(DB_Field_t field, void *value, uint16_t sizeDa
 }
 
 
-DB_Message_t Database_ReadField(DB_Field_t field, void *value) {
+DB_Message_t Database_ReadField(DB_Field_t parameter, void *value) {
 	DB_Message_t result = db_OperationError;
+	uint8_t indexDB;
 
-	if ((field < DB_field_Amount) && (value != NULL)) {
-		uint8_t index = GetIdInDatabase(field);
-		if (index != INDEX_NOT_FOUND) {
-			memcpy(value, &Database[index].Value, (uint16_t) Database[index].Type);
+	if ((parameter < DB_parameters_Amount) && (value != NULL)) {
+		 indexDB = GetIdInDatabase(parameter);
+		if (indexDB != INDEX_NOT_FOUND) {
+			memcpy(value, &Database[indexDB].Value, (uint16_t) Database[indexDB].Type);
 			result = db_OperationDone;
 		}
 	}
@@ -90,13 +101,14 @@ DB_Message_t Database_ReadField(DB_Field_t field, void *value) {
 }
 
 
-DB_Message_t Database_ReadMin(DB_Field_t field, void *value) {
+DB_Message_t Database_ReadMin(DB_Field_t parameter, void *value) {
 	DB_Message_t result = db_OperationError;
+	uint8_t indexDB;
 
-	if ((field < DB_field_Amount) && (value != NULL)) {
-		uint8_t index = GetIdInDatabase(field);
-		if(index != INDEX_NOT_FOUND){
-			memcpy(value, &Database[index].MinValue, (uint16_t)Database[index].Type);
+	if ((parameter < DB_parameters_Amount) && (value != NULL)) {
+		indexDB = GetIdInDatabase(parameter);
+		if(indexDB != INDEX_NOT_FOUND){
+			memcpy(value, &Database[indexDB].MinValue, sizeof(Database[indexDB].MinValue));
 			result = db_OperationDone;
 		}
 	}
@@ -104,13 +116,44 @@ DB_Message_t Database_ReadMin(DB_Field_t field, void *value) {
 }
 
 
-DB_Message_t Database_ReadMax(DB_Field_t field, void *value){
+DB_Message_t Database_ReadMax(DB_Field_t parameter, void *value){
 	DB_Message_t result = db_OperationError;
+	uint8_t indexDB;
 
-	if ((field < DB_field_Amount) && (value != NULL)) {
-		uint8_t index = GetIdInDatabase(field);
-		if(index != INDEX_NOT_FOUND){
-			memcpy(value, &Database[index].MaxValue, (uint16_t)Database[index].Type);
+	if ((parameter < DB_parameters_Amount) && (value != NULL)) {
+		indexDB = GetIdInDatabase(parameter);
+		if(indexDB != INDEX_NOT_FOUND){
+			memcpy(value, &Database[indexDB].MaxValue, sizeof(Database[indexDB].MaxValue));
+			result = db_OperationDone;
+		}
+	}
+	return result;
+}
+
+
+DB_Message_t Database_ReadAddress(DB_Field_t parameter, void *value) {
+	DB_Message_t result = db_OperationError;
+	uint8_t indexDB;
+
+	if ((parameter < DB_parameters_Amount) && (value != NULL)) {
+		indexDB = GetIdInDatabase(parameter);
+		if (indexDB != INDEX_NOT_FOUND) {
+			memcpy(value, &Database[indexDB].AddressInFlash, sizeof(Database[indexDB].AddressInFlash));
+			result = db_OperationDone;
+		}
+	}
+	return result;
+}
+
+
+DB_Message_t Database_ReadType(DB_Field_t parameter, void *value){
+	DB_Message_t result = db_OperationError;
+	uint8_t indexDB;
+
+	if ((parameter < DB_parameters_Amount) && (value != NULL)) {
+		indexDB = GetIdInDatabase(parameter);
+		if (indexDB != INDEX_NOT_FOUND) {
+			memcpy(value, &Database[indexDB].Type, sizeof(Database[indexDB].Type));
 			result = db_OperationDone;
 		}
 	}
@@ -120,7 +163,7 @@ DB_Message_t Database_ReadMax(DB_Field_t field, void *value){
 
 DB_Message_t Database_SetDefault(void) {
 	DB_Message_t result = db_OperationError;
-	for (uint8_t i = 0; i < DB_field_Amount; i++) {
+	for (uint8_t i = 0; i < DB_parameters_Amount; i++) {
 		Database_SetDefaultIn(i);
 		result = db_OperationDone;
 	}
@@ -128,13 +171,14 @@ DB_Message_t Database_SetDefault(void) {
 }
 
 
-DB_Message_t Database_SetDefaultIn(DB_Field_t field) {
+DB_Message_t Database_SetDefaultIn(DB_Field_t parameter) {
 	DB_Message_t result = db_OperationError;
+	uint8_t indexDB;
 
-	if (field < DB_field_Amount) {
-		uint8_t index = GetIdInDatabase(field);
-		if (index != INDEX_NOT_FOUND) {
-			Database[index].Value = Database[index].DefaultValue;
+	if (parameter < DB_parameters_Amount) {
+		indexDB = GetIdInDatabase(parameter);
+		if (indexDB != INDEX_NOT_FOUND) {
+			Database[indexDB].Value = Database[indexDB].DefaultValue;
 			result = db_OperationDone;
 		}
 	}
@@ -145,11 +189,11 @@ DB_Message_t Database_SetDefaultIn(DB_Field_t field) {
 
 
 
-uint8_t GetIdInDatabase(DB_Field_t field){
+uint8_t GetIdInDatabase(DB_Field_t parameter){
 	uint8_t result = INDEX_NOT_FOUND;
 
-	for(uint8_t i = 0; i < DB_field_Amount; i++){
-		if(Database[i].FieldName == field){
+	for(uint8_t i = 0; i < DB_parameters_Amount; i++){
+		if(Database[i].FieldName == parameter){
 			result = i;
 			break;
 		}
