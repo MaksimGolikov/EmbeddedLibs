@@ -69,8 +69,10 @@ DB_Message_t Database_ChangeFeild(DB_Field_t parameter, void *value, uint16_t si
 					&& (newData.data != currentData.data)) {
 				memcpy(&Database[indexDB].Value, value, sizeData);
 
-				if(indexDB < FINISH_FLASH){
-				   sFLASH_RewriteData(newData.mass, Database[indexDB].AddressInFlash, (uint16_t)Database[indexDB].Type);
+				if(parameter < FINISH_FLASH){
+					if(Database[indexDB].AddressInFlash > 0){
+						 sFLASH_RewriteData(newData.mass, Database[indexDB].AddressInFlash, (uint16_t)Database[indexDB].Type);
+					}
 				}
 
 
