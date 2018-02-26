@@ -65,7 +65,8 @@ DB_Message_t Database_ChangeFeild(DB_Field_t parameter, void *value, uint16_t si
 			if(Database[indexDB].Type <= UINT32){
 				convertType_t newData;
 				convertType_t currentData;
-
+                                newData.data = 0;
+	
 				Database_ReadField(indexDB, currentData.mass);
 				memcpy(newData.mass, value, sizeData);
 
