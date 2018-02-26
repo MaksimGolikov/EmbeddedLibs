@@ -5,10 +5,10 @@
  * Description  utility for control Data base  (source file)
  */
 
-#include "DB/Database_control.h"
-#include "DB/Database_configuration.h"
-#include "DB/Database_describe.h"
-//#include "DRV/w25q32bv.h"
+#include "Common/Database/Database_control.h"
+#include "Common/Database/Database_configuration.h"
+#include "Common/Database/Database_describe.h"
+#include "DRV/w25q32bv.h"
 #include <string.h>
 
 
@@ -23,21 +23,23 @@ uint8_t GetIdInDatabase(DB_Field_t parameter);
 
 
 
-void Database_Init(void){
+void Database_Init(void) {
 
-	for(uint8_t parameter = 0; parameter < DB_parameters_Amount; parameter ++){
+	for (uint8_t parameter = 0; parameter < DB_parameters_Amount; parameter++) {
 		uint8_t indexDB = GetIdInDatabase(parameter);
 		if (indexDB != INDEX_NOT_FOUND) {
-			Database_SetDefaultIn(parameter);
-			if(parameter < FINISH_FLASH ){
+			if (parameter > FINISH_FLASH) {
+				Database_SetDefaultIn(parameter);
+			} else {
 				if (Database[indexDB].AddressInFlash != 0) {
 					if (Database[indexDB].Type <= UINT32) {
 						convertType_t read;
-						memcpy(read.mass, &Database[indexDB].AddressInFlash, (uint16_t)Database[indexDB].Type);
-						//sFLASH_ReadBuffer(read.mass, addressFlash, (uint16_t)Database[indexDB].Type);
+						sFLASH_ReadBuffer(read.mass,
+								Database[indexDB].AddressInFlash,
+								(uint16_t) Database[indexDB].Type);
 						Database[indexDB].Value = 0;
 						for (uint8_t i = 0; i < Database[indexDB].Type; i++) {
-							Database[indexDB].Value |= read.mass[i] << ((Database[indexDB].Type * 8) - (i + 1) * 8);
+							Database[indexDB].Value |= read.mass[i]	<< ((Database[indexDB].Type * 8) - (i + 1) * 8);
 						}
 						if ((Database[indexDB].Value < Database[indexDB].MinValue)
 								|| (Database[indexDB].Value	> Database[indexDB].MaxValue)) {
@@ -47,8 +49,7 @@ void Database_Init(void){
 				}
 			}
 		}
-    }
-
+	}
 
 }
 
@@ -56,6 +57,7 @@ void Database_Init(void){
 DB_Message_t Database_ChangeFeild(DB_Field_t parameter, void *value, uint16_t sizeData) {
 	DB_Message_t result = db_OperationError;
 	uint8_t indexDB;
+    uint8_t dataChanged = 0;
 
 	if ((parameter < DB_parameters_Amount) && (value != NULL)) {
 		indexDB = GetIdInDatabase(parameter);
@@ -71,22 +73,28 @@ DB_Message_t Database_ChangeFeild(DB_Field_t parameter, void *value, uint16_t si
 									&& (newData.data <= Database[indexDB].MaxValue)
 									&& (newData.data != currentData.data)){
 					memcpy(&Database[indexDB].Value, value, sizeData);
+					result = db_OperationDone;
 					if(parameter < FINISH_FLASH){
 						if(Database[indexDB].AddressInFlash > 0){
-							memcpy(newData.mass, &Database[indexDB].AddressInFlash, (uint16_t)Database[indexDB].Type);
-							result = db_OperationDone;
+							memcpy(&Database[indexDB].AddressInFlash, newData.mass, (uint16_t)Database[indexDB].Type);
+							result = db_SavedInFlash;
+							dataChanged = 1;
 						}
 					}
 				}
 			}else{
 				if (Database[indexDB].AddressInFlash != 0) {
 					uint8_t write[Database[indexDB].Type];
-					//sFLASH_ReadBuffer(read, addressFlash, (uint16_t)Database[indexDB].Type);
-					memcpy(&Database[indexDB].AddressInFlash, write, (uint16_t)Database[indexDB].Type);
+					if(parameter < FINISH_FLASH){
+						sFLASH_ReadBuffer(write, Database[indexDB].AddressInFlash, (uint16_t)Database[indexDB].Type);
+					}else{
+						memcpy(&Database[indexDB].AddressInFlash, write, (uint16_t)Database[indexDB].Type);
+					}
 					result = db_OperationDone;
+					dataChanged = 1;
 				}
 			}
-			if (Database[indexDB].Callback != NULL) {
+			if (dataChanged && Database[indexDB].Callback != NULL) {
 				Database[indexDB].Callback(parameter);
 			}
 		}
@@ -107,12 +115,15 @@ DB_Message_t Database_ReadField(DB_Field_t parameter, void *value) {
 				memcpy(value, &Database[indexDB].Value, (uint16_t) Database[indexDB].Type);
 				result = db_OperationDone;
 			} else {
-				uint32_t addressFlash = Database[indexDB].AddressInFlash;
-				if (addressFlash != 0) {
+				if (Database[indexDB].AddressInFlash != 0) {
 					uint8_t read[Database[indexDB].Type];
-					//sFLASH_ReadBuffer(read, addressFlash, (uint16_t)Database[indexDB].Type);
-					memcpy(read, &addressFlash, (uint16_t)Database[indexDB].Type);
+					if(parameter < FINISH_FLASH){
+						sFLASH_ReadBuffer(read, Database[indexDB].AddressInFlash, (uint16_t)Database[indexDB].Type);
+					}else{
+						memcpy(read, &Database[indexDB].AddressInFlash, (uint16_t)Database[indexDB].Type);
+					}
 					memcpy(value, read, Database[indexDB].Type);
+
 					result = db_OperationDone;
 				}
 			}

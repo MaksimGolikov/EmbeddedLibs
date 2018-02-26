@@ -16,8 +16,12 @@
 typedef enum{
 	BOOL   = 1,
 	UINT8  = 1,
+	INT8   = 1,
 	UINT16 = 2,
+	INT16  = 2,
 	UINT32 = 4,
+	INT32  = 4,
+	MASS_UINT16_254 = 254,
 	Type_Amount
 }DB_DataTypes_t;
 
@@ -25,22 +29,27 @@ typedef enum{
 typedef struct{
 	DB_Field_t      FieldName;
 	DB_DataTypes_t  Type;
-	uint32_t        Value;
-	uint32_t        MinValue;
+	int32_t         MinValue;
 	uint32_t        MaxValue;
-	uint32_t        DefaultValue;
+	int32_t         DefaultValue;
 	uint32_t        AddressInFlash;
 	void            (*Callback)();
+	int32_t         Value;
 }Field_struct_t;
 
 
 
 typedef enum{
 	db_OperationDone,
-	db_OperationError
+	db_OperationError,
+	db_SavedInFlash,
 }DB_Message_t;
 
 
+typedef union{
+	uint8_t  mass[4];
+	uint32_t data;
+}convertType_t;
 
 
 /**
@@ -84,6 +93,24 @@ DB_Message_t Database_ReadMin(DB_Field_t field, void *value);
  * @return - state of operation
  */
 DB_Message_t Database_ReadMax(DB_Field_t field, void *value);
+
+
+/**
+ * @brief function for read address in flash
+ * @param field - name of necessary database field
+ * @param value - pointer to variable which should contain return value
+ * @return - state of operation
+ */
+DB_Message_t Database_ReadAddress(DB_Field_t field, void *value);
+
+
+/**
+ * @brief function for read type of field
+ * @param field - name of necessary database field
+ * @param value - pointer to variable which should contain return value
+ * @return - state of operation
+ */
+DB_Message_t Database_ReadType(DB_Field_t field, void *value);
 
 
 /**
