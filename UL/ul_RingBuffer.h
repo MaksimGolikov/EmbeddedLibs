@@ -33,7 +33,7 @@ typedef enum {
  * @param size          - size of buffer what will be use
  * @return              - operation state
  */
-RingBuffer_Messages_t ulRingBuffer_Create(RingBuffer_t *ptrRingBuffer, uint8_t* ptrBuffer, uint8_t size);
+RingBuffer_Messages_t ul_RingBuffer_Create(RingBuffer_t *ptrRingBuffer, uint8_t* ptrBuffer, uint8_t size);
 
 
 
@@ -41,11 +41,13 @@ RingBuffer_Messages_t ulRingBuffer_Create(RingBuffer_t *ptrRingBuffer, uint8_t* 
 /* Function Push and Pop should use to sate and get one byte.*/
 /**
  * @brief function for save one byte to buffer
- * @param ptrRingBuffer - pointer to necessary riing buffer
+ * @param ptrRingBuffer - pointer to necessary ring buffer
  * @param newData       - pointer to necessary data
+ * @param dataSize      - size of sent data
  * @return              - operation state
  */
-RingBuffer_Messages_t ulRingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* newData);
+RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* newData, uint16_t dataSize);
+
 /**
  * @brief function for get data from ring buffer
  * @param ptrRingBuffer - pointer to necessary ring buffer
@@ -53,7 +55,7 @@ RingBuffer_Messages_t ulRingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* new
  * @param sizeData      - pointer to value what will be contain size of read data
  * @return              - operation state
  */
-RingBuffer_Messages_t ulRingBuffer_Pop(RingBuffer_t *ptrRingBuffer,uint8_t* readData, uint16_t* sizeData);
+RingBuffer_Messages_t ul_RingBuffer_Pop(RingBuffer_t *ptrRingBuffer,uint8_t* readData, uint16_t* sizeData);
 
 
 
@@ -65,22 +67,24 @@ RingBuffer_Messages_t ulRingBuffer_Pop(RingBuffer_t *ptrRingBuffer,uint8_t* read
  * @param ptrRingBuffer - pointer to necessary ring buffer
  * @return              - operation state
  */
-RingBuffer_Messages_t ulRingBuffer_CreatePackage(RingBuffer_t *ptrRingBuffer);
+RingBuffer_Messages_t ul_RingBuffer_CreatePackage(RingBuffer_t *ptrRingBuffer);
 /**
  *
  * @param ptrRingBuffer - pointer to necessary ring buffer
  * @param newByte       - what should to save in ring buffer
  * @return              - operation state
  */
-RingBuffer_Messages_t ulRingBuffer_PushByte(RingBuffer_t *ptrRingBuffer, uint8_t newByte);
+RingBuffer_Messages_t ul_RingBuffer_PushByte(RingBuffer_t *ptrRingBuffer, uint8_t newByte);
 /**
  * @brief function for finish package in ring buffer
  * @param ptrRingBuffer - pointer to necessary ring buffer
+ * @return              - operation state
  */
-void ulRingBuffer_FinalizePackage(RingBuffer_t *ptrRingBuffer);
+RingBuffer_Messages_t ul_RingBuffer_FinalizePackage(RingBuffer_t *ptrRingBuffer);
 /**
  * @brief function for remove last package from ring buffer
  * @param ptrRingBuffer - pointer to necessary ring buffer
+ * @return              - operation state
  */
-void ulRingBuffer_RemovePackage(RingBuffer_t *ptrRingBuffer);
+RingBuffer_Messages_t ul_RingBuffer_RemovePackage(RingBuffer_t *ptrRingBuffer);
 

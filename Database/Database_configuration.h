@@ -12,20 +12,16 @@
 
 #include <Common/DataBase/Database_control.h>
 #include <Common/DataBase/Database_describe.h>
-//#include <Common/DataBase/Database_callbacks.h>
+#include <Common/DataBase/Database_callbacks.h>
 
-#include "Common/FlashMap.h"
 
-void Callback_SaveToFlash(uint32_t address, void *value, DB_DataTypes_t type);
 
 
 
 Field_struct_t Database[]={
-    //  Name                               Type,      Value     Min     Max     Default    Address                                Callback
-	  //  {ID,                            UINT8,      0,       1,      127,       1,      ADDR_ID,                            Callback_SaveToFlash},
-		{prm_GameMode,                     UINT8,      0,       0,       3,        0},
-		{prm_PowerButtonEvent,             UINT8,      0,       0,       7,        0},
-	    {prm_TriggerButtonEvent,           UINT8,      0,       0,       7,        0}
+    //  Name                                    Type,                        Min           Max                   Default                         Address                Callback
+	
+
 };
 
 

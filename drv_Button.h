@@ -13,26 +13,36 @@
 #include "stm32f1xx_hal.h"
 #include "stdint.h"
 
-typedef enum{
-  BUTTON_RESET_EVENT,
-  BUTTON_SHORT_EVENT,
-  BUTTON_2S_EVENT,
+typedef enum {
+	BUTTON_RESET_EVENT,
+	BUTTON_SHORT_EVENT,
+	BUTTON_2S_EVENT,
 	BUTTON_3S_EVENT,
 	BUTTON_5S_EVENT,
-	BUTTON_10S_EVENT
-}Button_Event_t;
+	BUTTON_10S_EVENT,
+	ButtonsEvent_Amounnt
+} Button_Event_t;
 
 
 typedef enum{
 	TRIGGER_BUTTON,
 	RECHARGE_BUTTON,
-	POWER_BUTTON	
+	POWER_BUTTON,
+	Buttons_Amount
 }buttons_t;
 
 typedef enum{
 	ON_PRESS,
 	ON_RELEASE
 }ButtonWorkMode_t;
+
+
+typedef enum{
+	key_reset,
+	key_set
+}ButtonState_t;
+
+
 
 /**
 * @brief function for initialize parameters start value_comp
@@ -51,26 +61,32 @@ void drv_Button_Run(void);
 
 /**
 *@brief  function for get button event
-*@param  number of need button from 
+*@param  buttonNumber - number of needed button
 *@return event of  button
 */
 Button_Event_t  drv_Button_GetEvent(buttons_t buttonNumber);
 
 /**
 *@brief  function for get button state
-*@param  number of need button from 
+*@param  buttonNumber - number of needed button
 *@return state of  button
 */
-uint8_t  drv_Button_IsButtonPressed(buttons_t buttonNumber);
+ButtonState_t  drv_Button_IsButtonPressed(buttons_t buttonNumber);
 
 /**
   @brief   function for take press time of button
-  @param   buttonNumber name of necessary button
+  @param   buttonNumber - number of needed button
   @return	 count of system tick when button was pressed
 */
 uint32_t drv_Button_GetTimeOfLongPress(buttons_t buttonNumber);
 
 
+/**
+ * @brief function for take previous event
+ * @param buttonNumber - number of needed button
+ * @return
+ */
+Button_Event_t  drv_Button_GetPreviousEvent(buttons_t buttonNumber);
 
 
 

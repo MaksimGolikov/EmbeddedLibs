@@ -13,14 +13,13 @@
 #include "stdint.h"
 
 
-/**
- * @brief function for save value of parameter to DB
- * @param address  - address in flash for write
- * @param value    - pointer to necessary value
- * @param sizeData - size of tent data
- */
-void Callback_SaveToFlash(uint32_t address, void *value, uint16_t sizeData);
 
+/**
+ * @brief function for change update button event
+ * @param button - name of button
+ * @param event - name of event
+ */
+void Callback_ChangeButtonEvent(uint8_t button, uint8_t event);
 
 
 

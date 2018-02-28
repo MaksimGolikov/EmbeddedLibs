@@ -9,13 +9,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ul_RingBuffer.h>
+#include <UL/ul_RingBuffer.h>
 
 
 static uint8_t indexIncrement(uint8_t currentIndex,uint8_t sizeData, uint8_t maxValue);
 
 
-RingBuffer_Messages_t ulRingBuffer_Create(RingBuffer_t *ptrRingBuffer, uint8_t* ptrBuffer, uint8_t size) {
+RingBuffer_Messages_t ul_RingBuffer_Create(RingBuffer_t *ptrRingBuffer, uint8_t* ptrBuffer, uint8_t size) {
 	RingBuffer_Messages_t returnValue = initializationError;
 
 	if ((size != 0)&&(ptrBuffer != NULL)) {
@@ -34,20 +34,19 @@ RingBuffer_Messages_t ulRingBuffer_Create(RingBuffer_t *ptrRingBuffer, uint8_t* 
 
 
 
-RingBuffer_Messages_t ulRingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* newData){
+RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* newData, uint16_t dataSize){
 	RingBuffer_Messages_t returnValue = initializationError;
-    uint8_t dataSize=strlen(newData);
 
 	if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
 			returnValue = initializationError;
-		} else if ( ptrRingBuffer->fullness +dataSize>= ptrRingBuffer->size) {
+		} else if ( ptrRingBuffer->fullness + dataSize >= ptrRingBuffer->size) {
 			returnValue = bufferIsFull;
 		} else {
 
 			ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexWrite] = dataSize;
-			ptrRingBuffer->indexWrite=indexIncrement(ptrRingBuffer->indexWrite,1,ptrRingBuffer->size);
+			ptrRingBuffer->indexWrite = indexIncrement(ptrRingBuffer->indexWrite,dataSize,ptrRingBuffer->size);
 
-			if( (dataSize+ptrRingBuffer->indexWrite)<ptrRingBuffer->size){
+			if( (dataSize+ptrRingBuffer->indexWrite) < ptrRingBuffer->size){
 				memcpy(&(ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexWrite]),newData,dataSize);
 				ptrRingBuffer->indexWrite=indexIncrement(ptrRingBuffer->indexWrite,dataSize,ptrRingBuffer->size);
 			}
@@ -63,14 +62,14 @@ RingBuffer_Messages_t ulRingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* new
 				memcpy(&(ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexWrite]),&(newData[FirstPart]),SecondPart);
 				ptrRingBuffer->indexWrite=indexIncrement(ptrRingBuffer->indexWrite,SecondPart,ptrRingBuffer->size);
 			}
-			ptrRingBuffer->fullness += (dataSize + 1);
+			ptrRingBuffer->fullness  += (dataSize + 1);
 			returnValue = ok;
 
 		}
  return returnValue;
 }
 
-RingBuffer_Messages_t ulRingBuffer_Pop(RingBuffer_t *ptrRingBuffer, uint8_t* readData, uint16_t* sizeData){
+RingBuffer_Messages_t ul_RingBuffer_Pop(RingBuffer_t *ptrRingBuffer, uint8_t* readData, uint16_t* sizeData){
 	RingBuffer_Messages_t returnValue = initializationError;
 
 		if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
@@ -79,7 +78,7 @@ RingBuffer_Messages_t ulRingBuffer_Pop(RingBuffer_t *ptrRingBuffer, uint8_t* rea
 			returnValue = bufferIsEmpty;
 		} else {
 
-			uint8_t DataSize=ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexRead];
+			uint8_t DataSize = ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexRead];
 			ptrRingBuffer->indexRead=indexIncrement(ptrRingBuffer->indexRead,1,ptrRingBuffer->size);
 
 		   if( (ptrRingBuffer->indexRead+DataSize)<=ptrRingBuffer->size){
@@ -102,7 +101,7 @@ RingBuffer_Messages_t ulRingBuffer_Pop(RingBuffer_t *ptrRingBuffer, uint8_t* rea
 
 		   }
 
-			ptrRingBuffer->fullness -= (DataSize + 1);
+			ptrRingBuffer->fullness -= ( DataSize +1) ;
 			(*sizeData)=DataSize;
 
 			returnValue = ok;
@@ -113,7 +112,7 @@ RingBuffer_Messages_t ulRingBuffer_Pop(RingBuffer_t *ptrRingBuffer, uint8_t* rea
 
 
 
-RingBuffer_Messages_t ulRingBuffer_CreatePackage(RingBuffer_t *ptrRingBuffer){
+RingBuffer_Messages_t ul_RingBuffer_CreatePackage(RingBuffer_t *ptrRingBuffer){
 	RingBuffer_Messages_t returnValue = initializationError;
 
 		if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
@@ -131,7 +130,7 @@ RingBuffer_Messages_t ulRingBuffer_CreatePackage(RingBuffer_t *ptrRingBuffer){
 		return returnValue;
 }
 
-RingBuffer_Messages_t ulRingBuffer_PushByte(RingBuffer_t *ptrRingBuffer, uint8_t newByte){
+RingBuffer_Messages_t ul_RingBuffer_PushByte(RingBuffer_t *ptrRingBuffer, uint8_t newByte){
 	RingBuffer_Messages_t returnValue = initializationError;
 
 		if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
@@ -149,7 +148,7 @@ RingBuffer_Messages_t ulRingBuffer_PushByte(RingBuffer_t *ptrRingBuffer, uint8_t
 		return returnValue;
 }
 
-void ulRingBuffer_FinalizePackage(RingBuffer_t *ptrRingBuffer){
+RingBuffer_Messages_t ul_RingBuffer_FinalizePackage(RingBuffer_t *ptrRingBuffer){
 	RingBuffer_Messages_t returnValue = initializationError;
 
 		if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
@@ -162,7 +161,7 @@ void ulRingBuffer_FinalizePackage(RingBuffer_t *ptrRingBuffer){
 		return returnValue;
 }
 
-void ulRingBuffer_RemovePackage(RingBuffer_t *ptrRingBuffer){
+RingBuffer_Messages_t ul_RingBuffer_RemovePackage(RingBuffer_t *ptrRingBuffer){
 	RingBuffer_Messages_t returnValue = initializationError;
 
 		if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
@@ -183,7 +182,7 @@ static uint8_t indexIncrement(uint8_t currentIndex,uint8_t sizeData, uint8_t max
 	uint8_t returnValue = currentIndex;
 
 	if(currentIndex+sizeData<=(maxValue-1))
-		returnValue+=sizeData;
+		returnValue+=sizeData ;
 	else
 		returnValue=0;
 

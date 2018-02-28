@@ -7,18 +7,35 @@
 
 
 #include "Common/DataBase/Database_callbacks.h"
-#include "DRV/w25q32bv.h"
+#include "Common/Database/Database_control.h"
+
+#include "DRV/drv_Button.h"
 #include <string.h>
 
 
-void Callback_SaveToFlash(uint32_t address, void *value, uint16_t sizeData) {
 
-	if (value != NULL) {
-		uint8_t read[sizeData];
-		memcpy(read, value, sizeData);
-		sFLASH_RewriteData(read, address, sizeData);
+
+
+
+void Callback_ChangeButtonEvent(uint8_t button, uint8_t event){
+	if(button < Buttons_Amount){
+		if(event < ButtonsEvent_Amounnt){
+			uint8_t nameParameter;
+			switch(button){
+			case TRIGGER_BUTTON:
+				nameParameter = prm_ButtonFireEvent;
+				break;
+			case POWER_BUTTON:
+				nameParameter = prm_ButtonPowerEvent;
+				break;
+			case RECHARGE_BUTTON:
+				nameParameter = prm_ButtonPowerEvent;
+				break;
+			default:
+				break;
+			}
+			Database_ChangeFeild(nameParameter, &event, sizeof(event));
+		}
 	}
+
 }
-
-
-
