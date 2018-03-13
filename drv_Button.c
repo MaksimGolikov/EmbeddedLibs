@@ -40,7 +40,7 @@ typedef struct {
 	Button_Event_t   previousButtonEvent;
 	ButtonState_t    keyState;
 	uint32_t         startTime;
-	uint16_t         counter;
+	uint8_t          counter;
 	ButtonWorkMode_t workMode;
 	uint8_t          buffer[SIZE_BUTTON_BUFFER];
 	RingBuffer_t     eventsBuffer;
