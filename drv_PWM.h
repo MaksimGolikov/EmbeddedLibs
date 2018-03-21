@@ -31,6 +31,14 @@ void drv_PWM_SetPuls(uint8_t numPWM, uint16_t intensity);
 
 
 /**
+*@brief function for get max pulse of pwm
+*@param numPWM - number necessary pwm
+*@return max value off pulse
+*/
+uint16_t drv_PWM_GetPuls(uint8_t numPWM);
+
+
+/**
  * @brief function for start generate PWM
  * @param numPWM  what timer control PWM 
  */

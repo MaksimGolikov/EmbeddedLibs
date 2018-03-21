@@ -23,10 +23,19 @@ typedef enum{
 typedef enum{
   mode_OFF,
 	mode_ON,
-  mode_BLINK  
+  mode_BLINK ,
+  mode_BLINK_SLIDE	
 }rgbLed_WorkMode_t;
 
-
+ typedef enum{
+	 color_RED,	
+	 color_BLUE,
+	 color_YELLOW,
+	 color_GREEN,
+	 color_WHITE,
+	 color_Amount
+ }PossibleColors_t;
+ 
 /**
 *@brief function for should be cal first
 *@param timer_Red    pointer to timer which should control red color
@@ -80,6 +89,14 @@ uint32_t drv_LedRGB_GetBlinkPeriod(void);
 *@param bluePart - part of blue color in complex color 
 */				 
 void  drv_LedRGB_SetColor(rgbLeds_t led, uint16_t  redPart, uint16_t greenPart, uint16_t bluePart);
+
+
+/**
+*@brief function for set color of rgb led
+*@param name of necessary led
+*@param color - necessary color 
+*/				 
+void  drv_LedRGB_SetDefineColor(rgbLeds_t led, uint8_t  color);
 
 
 /**

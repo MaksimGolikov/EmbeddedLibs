@@ -9,6 +9,7 @@
  #include "DRV/drv_PWM.h"
  #include "DRV/drv_SysClock.h"
  
+ #define STEP_INTENSITY    1
  
  typedef struct{
    uint8_t            numberPWM_Red;
@@ -23,15 +24,35 @@
 	 
 	 uint16_t            red;
 	 uint16_t            green;
-	 uint16_t            blue; 
+	 uint16_t            blue;
+	 uint16_t            redSlide;
+	 uint16_t            greenSlide;
+	 uint16_t            blueSlide;
  }LedDescription_t;
+ 
+ 
+ 
+ static uint16_t defineColors [color_Amount][3] = {
+	 // Red  Green    Blue
+	   {100,  0,      100},   //Red
+	   {100,  100,    0},   //Blue		 
+		 {100,  100,    100},     //
+		 {0,    0,      0},   //		
+		 {100,  100,    100}  //White
+ };
+ 
+ 
+ 
+ 
+ 
+ 
  
  
  static uint8_t lastLedNumber = 0;
  
  static LedDescription_t rgbLeds[rgb_Amount] = {
-//  numPWM_red  numPWM_green  numPWM_blue     mode          state     intensity    period   startTime    red   green   blue
-	    { 0,           0,           0,       mode_BLINK,    mode_OFF,      50,        1000,       0,       255,   255,   255}// rgb_INDICATE
+//  numPWM_red  numPWM_green  numPWM_blue     mode          state     intensity    period   startTime    red   green   blue  Rslide  Gslide  Bslide
+	    { 0,           0,           0,       mode_BLINK,    mode_OFF,      50,        1000,       0,       255,   255,   255,    0,      0,      0}// rgb_INDICATE
  };
  
  
@@ -63,6 +84,21 @@
 void drv_LedRGB_SetMode(rgbLeds_t led, rgbLed_WorkMode_t newMode){
 	if(led < rgb_Amount){
 		rgbLeds[led].workMode = newMode;
+		
+		switch(rgbLeds[led].workMode){
+			default:
+			case mode_OFF:
+				drv_PWM_Stop(rgbLeds[led].numberPWM_Red);
+		  	drv_PWM_Stop(rgbLeds[led].numberPWM_Green);
+			  drv_PWM_Stop(rgbLeds[led].numberPWM_Blue);
+				break;
+			case mode_ON:						
+			case mode_BLINK_SLIDE:
+				drv_PWM_Start(rgbLeds[led].numberPWM_Red);
+				drv_PWM_Start(rgbLeds[led].numberPWM_Green);
+				drv_PWM_Start(rgbLeds[led].numberPWM_Blue);
+				break;
+		}		
 	}	
 }
 
@@ -88,34 +124,28 @@ uint32_t drv_LedRGB_GetBlinkPeriod(void){
 
 void  drv_LedRGB_SetColor(rgbLeds_t led, uint16_t  redPart, uint16_t greenPart, uint16_t bluePart){
 	if(led < rgb_Amount){
-		rgbLeds[led].red = redPart;
+		rgbLeds[led].red   = redPart;
 		rgbLeds[led].green = greenPart;
-		rgbLeds[led].blue = bluePart;
+		rgbLeds[led].blue  = bluePart;
+		rgbLeds[led].redSlide   = redPart;
+		rgbLeds[led].greenSlide = greenPart;
+		rgbLeds[led].blueSlide  = bluePart;
+		
+		
 		
 		drv_PWM_SetPuls(rgbLeds[led].numberPWM_Red, rgbLeds[led].red);
 		drv_PWM_SetPuls(rgbLeds[led].numberPWM_Green, rgbLeds[led].green);
 		drv_PWM_SetPuls(rgbLeds[led].numberPWM_Blue, rgbLeds[led].blue);
-		
-		
-		if(rgbLeds[led].red > 0){
-			drv_PWM_Start(rgbLeds[led].numberPWM_Red);
-		}else{
-			drv_PWM_Stop(rgbLeds[led].numberPWM_Red);
-		}
-		
-		if(rgbLeds[led].green > 0){
-			drv_PWM_Start(rgbLeds[led].numberPWM_Green);
-		}else{
-			drv_PWM_Stop(rgbLeds[led].numberPWM_Green);
-		}
-		
-		if(rgbLeds[led].blue > 0){
-			drv_PWM_Start(rgbLeds[led].numberPWM_Blue);
-		}else{
-			drv_PWM_Stop(rgbLeds[led].numberPWM_Blue);
-		}		
 	}
 }
+
+void  drv_LedRGB_SetDefineColor(rgbLeds_t led, uint8_t  color){
+	if(color < color_Amount && led < rgb_Amount){
+		drv_LedRGB_SetColor(led, defineColors[color][0], defineColors[color][1], defineColors[color][2]);
+	}
+}
+
+
 
 void drv_LedRGB_GetColor(rgbLeds_t led, uint16_t  *redPart, uint16_t *greenPart, uint16_t *bluePart){
 	if(led < rgb_Amount){
@@ -140,25 +170,68 @@ uint8_t drv_LedRGB_GetIntensity(rgbLeds_t led){
 }
 
 
-void drv_LedRGB_Run(void){	
+void drv_LedRGB_Run(void){
 	
 	for(uint8_t led = 0; led < rgb_Amount; led ++){
+		
 		if(rgbLeds[led].workMode == mode_BLINK){
-		   if( drv_SysClock_IsTimeSpent(rgbLeds[led].startBlinkTime, rgbLeds[led].blinkPeriod) ){
-				 if(rgbLeds[led].state == mode_ON){
-					 rgbLeds[led].state = mode_OFF;
-					 drv_PWM_Stop(rgbLeds[led].numberPWM_Red);
-					 drv_PWM_Stop(rgbLeds[led].numberPWM_Green);
-					 drv_PWM_Stop(rgbLeds[led].numberPWM_Blue);
-				 }else{
-					 rgbLeds[led].state = mode_ON;
-					 drv_PWM_Start(rgbLeds[led].numberPWM_Red);
-					 drv_PWM_Start(rgbLeds[led].numberPWM_Green);
-					 drv_PWM_Start(rgbLeds[led].numberPWM_Blue);
+					if( drv_SysClock_IsTimeSpent(rgbLeds[led].startBlinkTime, rgbLeds[led].blinkPeriod) ){
+					 if(rgbLeds[led].state == mode_ON){
+						 rgbLeds[led].state = mode_OFF;
+						 drv_PWM_Stop(rgbLeds[led].numberPWM_Red);
+						 drv_PWM_Stop(rgbLeds[led].numberPWM_Green);
+						 drv_PWM_Stop(rgbLeds[led].numberPWM_Blue);
+					 }else{
+						 rgbLeds[led].state = mode_ON;
+						 drv_PWM_Start(rgbLeds[led].numberPWM_Red);
+						 drv_PWM_Start(rgbLeds[led].numberPWM_Green);
+						 drv_PWM_Start(rgbLeds[led].numberPWM_Blue);
+					 }
+					 rgbLeds[led].startBlinkTime = drv_SysClock_GetCurrentTime();
 				 }
-				 rgbLeds[led].startBlinkTime = drv_SysClock_GetCurrentTime();
-			 }
-	  }
+		}			
+		if(rgbLeds[led].workMode == mode_BLINK_SLIDE){
+			
+			if( drv_SysClock_IsTimeSpent(rgbLeds[led].startBlinkTime, rgbLeds[led].blinkPeriod) ){
+					 if(rgbLeds[led].state == mode_OFF){
+						 if( rgbLeds[led].red > 0 ){
+							   rgbLeds[led].red -= STEP_INTENSITY;
+						 }
+						 if( rgbLeds[led].green > 0 ){
+							   rgbLeds[led].green -= STEP_INTENSITY;
+						 }
+						 if( rgbLeds[led].blue > 0 ){
+							   rgbLeds[led].blue -= STEP_INTENSITY;
+						 }
+						 
+						 
+						 if( rgbLeds[led].red == 0 && rgbLeds[led].green == 0 && rgbLeds[led].blue == 0){
+							 rgbLeds[led].state = mode_ON;
+						 }						 
+					 }else{
+						 if(rgbLeds[led].red < rgbLeds[led].redSlide){
+							 rgbLeds[led].red += STEP_INTENSITY;
+						 }
+						 if(rgbLeds[led].green < rgbLeds[led].greenSlide){
+							 rgbLeds[led].green += STEP_INTENSITY;
+						 }
+						 if(rgbLeds[led].blue < rgbLeds[led].blueSlide){
+							 rgbLeds[led].blue += STEP_INTENSITY;
+						 }
+						 
+						 if( rgbLeds[led].red   == rgbLeds[led].redSlide &&
+							   rgbLeds[led].green == rgbLeds[led].greenSlide &&
+						     rgbLeds[led].blue  == rgbLeds[led].blueSlide){
+									 rgbLeds[led].state = mode_OFF;
+						 }
+					 }
+					 drv_PWM_SetPuls(rgbLeds[led].numberPWM_Red, rgbLeds[led].red);
+		       drv_PWM_SetPuls(rgbLeds[led].numberPWM_Green, rgbLeds[led].green);
+		       drv_PWM_SetPuls(rgbLeds[led].numberPWM_Blue, rgbLeds[led].blue);
+					 
+					 rgbLeds[led].startBlinkTime = drv_SysClock_GetCurrentTime();
+			}
+		}		 
 	}	
 	
 	drv_PWM_Run();

@@ -71,6 +71,15 @@ void drv_PWM_SetPuls(uint8_t numPWM, uint16_t intensity){
 }
 
 
+uint16_t drv_PWM_GetPuls(uint8_t numPWM){
+	uint16_t result = 0;	
+	if(numPWM < countOfPWM){
+		result = PWMs[numPWM].timer->Init.Period;
+	}
+	return result;
+}
+
+
 void drv_PWM_Start(uint8_t numPWM){
 	PWMs[numPWM].pwmStateActiv = PWM_active;
 }
