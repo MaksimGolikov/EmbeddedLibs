@@ -110,22 +110,6 @@ void drv_LedRGB_GetColor(rgbLeds_t led, uint16_t  *redPart, uint16_t *greenPart,
 
 
 /**
-*@brief function for set intensity of led light
-*@param name of necessary led
-*@param intensity - necessary value of intensity
-*/
-void drv_LedRGB_SetIntensity(rgbLeds_t led, uint8_t intensity);
-
-
-/**
-*@brief function for get intensity of led light
-*@param name of necessary led
-*@return  value of intensity
-*/
-uint8_t drv_LedRGB_GetIntensity(rgbLeds_t led);
-
-
-/**
 *@brief function for control led state
 */
 void drv_LedRGB_Run(void);
