@@ -94,7 +94,7 @@ void  drv_LedRGB_SetColor(rgbLeds_t led, uint16_t  redPart, uint16_t greenPart, 
 		
 		drv_PWM_SetPuls(rgbLeds[led].numberPWM_Red, rgbLeds[led].red);
 		drv_PWM_SetPuls(rgbLeds[led].numberPWM_Green, rgbLeds[led].green);
-		drv_PWM_SetPuls(rgbLeds[led].numberPWM_Green, rgbLeds[led].blue);
+		drv_PWM_SetPuls(rgbLeds[led].numberPWM_Blue, rgbLeds[led].blue);
 		
 		
 		if(rgbLeds[led].red > 0){
