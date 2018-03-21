@@ -13,7 +13,6 @@
 
 #include "stm32f1xx_hal.h"
 #include "stdint.h"
-#include "DRV/drv_Timer.h"
 
 
 /**
@@ -21,6 +20,14 @@
  * @param timer  what timer control PWM * 
  */
 void drv_PWM_Init(TIM_HandleTypeDef *timer, uint8_t channel);
+
+
+/**
+*@brief function for set pulse of pwm
+*@param numPWM - number necessary pwm
+*@param intensity - value which should be set 
+*/
+void drv_PWM_SetPuls(uint8_t numPWM, uint16_t intensity);
 
 
 /**
@@ -39,6 +46,8 @@ void drv_PWM_Stop(uint8_t numPWM);
  * @brief function for launch
  */
 void drv_PWM_Run(void);
+
+
 
 
 /**

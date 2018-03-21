@@ -8,7 +8,7 @@
 
 #include "DRV/drv_PWM.h"
 
-#define MAX_COUNT_OF_PWM         5      // size of button buffer
+#define MAX_COUNT_OF_PWM         12      // size of button buffer
 
 enum{
 	PWM_deactive,
@@ -26,12 +26,19 @@ static uint8_t countOfPWM = 0;
 
 
 static PWM_struct_t PWMs[MAX_COUNT_OF_PWM]={
-	 // *timer   channel   currentState     oldState
+// ptrTimer   channel   currentState     oldState
    {0,        0,       PWM_deactive,    PWM_deactive},
 	 {0,        0,       PWM_deactive,    PWM_deactive},
 	 {0,        0,       PWM_deactive,    PWM_deactive},
 	 {0,        0,       PWM_deactive,    PWM_deactive},
-	 {0,        0,       PWM_deactive,    PWM_deactive}		
+	 {0,        0,       PWM_deactive,    PWM_deactive},
+   {0,        0,       PWM_deactive,    PWM_deactive},
+	 {0,        0,       PWM_deactive,    PWM_deactive},
+	 {0,        0,       PWM_deactive,    PWM_deactive},
+	 {0,        0,       PWM_deactive,    PWM_deactive},
+	 {0,        0,       PWM_deactive,    PWM_deactive},
+   {0,        0,       PWM_deactive,    PWM_deactive},
+	 {0,        0,       PWM_deactive,    PWM_deactive}	 
 };
 
 
@@ -53,31 +60,41 @@ void drv_PWM_Init(TIM_HandleTypeDef *timer, uint8_t newChannel){
 }
 
 
-void drv_PWM_Start(uint8_t numPWM){
-	PWMs[numPWM -1].pwmStateActiv = PWM_active;
+void drv_PWM_SetPuls(uint8_t numPWM, uint16_t intensity){
+	
+	if( intensity <= PWMs[numPWM].timer->Init.Period ){
+		PWMs[numPWM].timer->Instance->CCR1 = intensity;
+	}else{
+		PWMs[numPWM].timer->Instance->CCR1 = PWMs[numPWM].timer->Init.Period;
+	}
+	 
 }
 
+
+void drv_PWM_Start(uint8_t numPWM){
+	PWMs[numPWM].pwmStateActiv = PWM_active;
+}
 
 
 void drv_PWM_Stop(uint8_t numPWM){
-	PWMs[numPWM -1].pwmStateActiv = PWM_deactive;
+	PWMs[numPWM].pwmStateActiv = PWM_deactive;
 }
-
 
 
 void drv_PWM_Run(){
 	
-	for(uint8_t i = 1; i <= countOfPWM; i++){
-		if(PWMs[i - 1].oldState != PWMs[i - 1].pwmStateActiv){
-			if(PWMs[i - 1].pwmStateActiv == PWM_active){
-				HAL_TIM_PWM_Start(PWMs[i - 1].timer,PWMs[i - 1].channel);	
+	for(uint8_t i = 0; i < countOfPWM; i++){
+		if(PWMs[i].oldState != PWMs[i].pwmStateActiv){
+		   if(PWMs[i].pwmStateActiv == PWM_active){
+				HAL_TIM_PWM_Start(PWMs[i].timer, PWMs[i].channel);	
 			}else{
-				HAL_TIM_PWM_Stop(PWMs[i - 1].timer,PWMs[i- 1].channel);
+				HAL_TIM_PWM_Stop(PWMs[i].timer,PWMs[i].channel);
 			}
-			PWMs[i - 1].oldState = PWMs[i - 1].pwmStateActiv;
+			PWMs[i].oldState = PWMs[i].pwmStateActiv;
 		}		
 	}	
 }
+
 
 uint8_t drv_PWM_GetCurrentQuontityOfPWM(){
 	return countOfPWM;
