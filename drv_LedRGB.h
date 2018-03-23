@@ -32,6 +32,7 @@ typedef enum{
 	 color_BLUE,
 	 color_YELLOW,
 	 color_GREEN,
+	 color_ORANGE,
 	 color_WHITE,
 	 color_Amount
  }PossibleColors_t;
@@ -64,7 +65,7 @@ void drv_LedRGB_SetMode(rgbLeds_t led, rgbLed_WorkMode_t newMode);
 *@param newMode new mode of led
 *@return current mode
 */				 
-rgbLed_WorkMode_t drv_LedRGB_GetMode(rgbLeds_t led, rgbLed_WorkMode_t mode);
+rgbLed_WorkMode_t drv_LedRGB_GetMode(rgbLeds_t led);
 
 
 /**
@@ -107,22 +108,6 @@ void  drv_LedRGB_SetDefineColor(rgbLeds_t led, uint8_t  color);
 *@param bluePart - pointer to value which should contain part of blue color in complex color 
 */	
 void drv_LedRGB_GetColor(rgbLeds_t led, uint16_t  *redPart, uint16_t *greenPart, uint16_t *bluePart);
-
-
-/**
-*@brief function for set intensity of led light
-*@param name of necessary led
-*@param intensity - necessary value of intensity
-*/
-void drv_LedRGB_SetIntensity(rgbLeds_t led, uint8_t intensity);
-
-
-/**
-*@brief function for get intensity of led light
-*@param name of necessary led
-*@return  value of intensity
-*/
-uint8_t drv_LedRGB_GetIntensity(rgbLeds_t led);
 
 
 /**

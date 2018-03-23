@@ -18,7 +18,6 @@
 	 
 	 rgbLed_WorkMode_t  workMode;
 	 rgbLed_WorkMode_t  state;
-	 uint8_t            intensity;
 	 uint32_t           blinkPeriod;
 	 uint32_t           startBlinkTime;
 	 
@@ -36,8 +35,9 @@
 	 // Red  Green    Blue
 	   {100,  0,      100},   //Red
 	   {100,  100,    0},   //Blue		 
-		 {100,  100,    100},     //
-		 {0,    0,      0},   //		
+		 {100,  100,    100}, //
+		 {0,    100,    100}, //
+     {0,    0,      0},		//
 		 {100,  100,    100}  //White
  };
  
@@ -51,8 +51,8 @@
  static uint8_t lastLedNumber = 0;
  
  static LedDescription_t rgbLeds[rgb_Amount] = {
-//  numPWM_red  numPWM_green  numPWM_blue     mode          state     intensity    period   startTime    red   green   blue  Rslide  Gslide  Bslide
-	    { 0,           0,           0,       mode_BLINK,    mode_OFF,      50,        1000,       0,       255,   255,   255,    0,      0,      0}// rgb_INDICATE
+//  numPWM_red  numPWM_green  numPWM_blue     mode          state     period   startTime    red   green   blue  Rslide  Gslide  Bslide
+	    { 0,           0,           0,       mode_BLINK,    mode_OFF,    1000,       0,       255,   255,   255,    0,      0,      0}// rgb_INDICATE
  };
  
  
@@ -102,7 +102,7 @@ void drv_LedRGB_SetMode(rgbLeds_t led, rgbLed_WorkMode_t newMode){
 	}	
 }
 
-rgbLed_WorkMode_t drv_LedRGB_GetMode(rgbLeds_t led, rgbLed_WorkMode_t mode){
+rgbLed_WorkMode_t drv_LedRGB_GetMode(rgbLeds_t led){
 	rgbLed_WorkMode_t result = mode_OFF;	
 	if(led < rgb_Amount){
 		result = rgbLeds[led].workMode;
@@ -155,19 +155,6 @@ void drv_LedRGB_GetColor(rgbLeds_t led, uint16_t  *redPart, uint16_t *greenPart,
 	}
 }
 
-void drv_LedRGB_SetIntensity(rgbLeds_t led, uint8_t intensity){
-	if(led < rgb_Amount){
-		rgbLeds[led].intensity = intensity;
-	}
-}
-
-uint8_t drv_LedRGB_GetIntensity(rgbLeds_t led){
-	uint8_t result = 0;
-	if(led < rgb_Amount){
-		result = rgbLeds[led].intensity;		
-	}
-	return result;
-}
 
 
 void drv_LedRGB_Run(void){
