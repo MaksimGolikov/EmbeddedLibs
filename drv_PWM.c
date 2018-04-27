@@ -62,12 +62,30 @@ void drv_PWM_Init(TIM_HandleTypeDef *timer, uint8_t newChannel){
 
 void drv_PWM_SetPuls(uint8_t numPWM, uint16_t intensity){
 	
-	if( intensity <= PWMs[numPWM].timer->Init.Period ){
-		PWMs[numPWM].timer->Instance->CCR1 = intensity;
-	}else{
-		PWMs[numPWM].timer->Instance->CCR1 = PWMs[numPWM].timer->Init.Period;
+	uint16_t newValue = PWMs[numPWM].timer->Init.Period;
+	if( intensity < PWMs[numPWM].timer->Init.Period ){
+	  newValue  = intensity;
 	}
-	 
+		switch(PWMs[numPWM].channel){
+			case 0:
+				PWMs[numPWM].timer->Instance->CCR1 = newValue;
+				break;
+			case 4:
+				PWMs[numPWM].timer->Instance->CCR2 = newValue;
+				break;
+			case 8:
+				PWMs[numPWM].timer->Instance->CCR3 = newValue;
+				break;
+			case 12:
+				PWMs[numPWM].timer->Instance->CCR4 = newValue;
+				break;
+			default:
+				PWMs[numPWM].timer->Instance->CCR1 = newValue;
+				PWMs[numPWM].timer->Instance->CCR2 = newValue;
+				PWMs[numPWM].timer->Instance->CCR3 = newValue;
+				PWMs[numPWM].timer->Instance->CCR4 = newValue;
+				break;
+		}
 }
 
 
@@ -94,7 +112,7 @@ void drv_PWM_Run(){
 	
 	for(uint8_t i = 0; i < countOfPWM; i++){
 		if(PWMs[i].oldState != PWMs[i].pwmStateActiv){
-		   if(PWMs[i].pwmStateActiv == PWM_active){
+		  if(PWMs[i].pwmStateActiv == PWM_active){
 				HAL_TIM_PWM_Start(PWMs[i].timer, PWMs[i].channel);	
 			}else{
 				HAL_TIM_PWM_Stop(PWMs[i].timer,PWMs[i].channel);
