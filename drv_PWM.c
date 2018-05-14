@@ -126,3 +126,7 @@ void drv_PWM_Run(){
 uint8_t drv_PWM_GetCurrentQuontityOfPWM(){
 	return countOfPWM;
 }
+
+uint8_t drv_PWM_GetMaxQuontityOfPWM(void){
+	return MAX_COUNT_OF_PWM;
+}
