@@ -8,7 +8,7 @@
 
 
 #include "UL/ul_SendCommand.h"
-#include "DRV/drv_Timer.h"
+#include "DRV/drv_SysClock.h"
 #include "DRV/drv_PWM.h"
 
 
@@ -17,6 +17,7 @@
 #define LOW_PULS_TIME                              6  // count puls dev 100 
 #define HIGH_PULS_TIME                             12 // count puls dev 100 
 #define COMMAND_LENGTH                             23 // count of bits
+
 
 #define COUNT_OF_IR                                5
 
@@ -41,9 +42,6 @@ static IR_transmitter_t IRmass[]={
 // startTime  commandForSend    sendComandState    bitShift   needPause     PWMmode
       {0,            0,            0,                 0,              0,        0}, // 1 PWM
       {0,            0,            0,                 0,              0,        0}, // 2 PWM
-      {0,            0,            0,                 0,              0,        0}, // 3 PWM
-      {0,            0,            0,                 0,              0,        0}, // 4 PWM
-      {0,            0,            0,                 0,              0,        0}  // 5 PWM
 };
 
 static uint8_t countOfusedPWM = 0;
@@ -53,21 +51,21 @@ static uint8_t countOfusedPWM = 0;
 
 void ul_SendCommand_Init(){
   	
-	countOfusedPWM = drv_PWM_GetCurrentQuontityOfPWM();
+	//countOfusedPWM = drv_PWM_GetCurrentQuontityOfPWM();
 	
-	for(uint8_t i = 0; i < countOfusedPWM; i++){
-		 IRmass[i].startTime = drv_Timer_getCurrentTime();
-	}
+	//for(uint8_t i = 0; i < countOfusedPWM; i++){
+	//	 IRmass[i].startTime = drv_Timer_getCurrentTime();
+	//}
 }
 
 void ul_SendCommand_Send(uint8_t numIR, uint32_t command){
 	
-	assert_param(numIR > 0);
+	//assert_param(numIR > 0);
 	
-	IRmass[numIR - 1].commandForSend = command;
-	IRmass[numIR - 1].sendCommand_state = 0;
-	IRmass[numIR - 1].bitShift = COMMAND_LENGTH;
-	IRmass[numIR - 1].needPause = 0;
+	//IRmass[numIR - 1].commandForSend = command;
+	//IRmass[numIR - 1].sendCommand_state = 0;
+	//IRmass[numIR - 1].bitShift = COMMAND_LENGTH;
+	//IRmass[numIR - 1].needPause = 0;
 }
 
 

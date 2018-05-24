@@ -16,7 +16,7 @@
 
  typedef struct{
 	 GPIO_TypeDef*   port;
-     uint8_t         pin;
+     uint16_t         pin;
 
      Led_WorkMode_t  workMode;
      Led_WorkMode_t  state;
