@@ -296,30 +296,28 @@ void  drv_OLED_Display_DrawImage(uint8_t x_st,  uint8_t y_st,
 }
 
 
-void drv_OLED_Display_ScalePicture( uint8_t *ptrPicture, uint8_t base_Width, uint8_t base_Height,
-		                                uint8_t scale, uint8_t *ptrScaledPicture){
-
-	if(scale > 0){
-		uint16_t scaled_Width = base_Width * scale;
-
-		for (uint8_t i = 0; i < base_Width; ++i) {
-			for (uint8_t j = 0; j < base_Height; ++j) {
-				uint16_t dotColor = *(ptrPicture + (i * base_Width) + j);
-
-				uint8_t x_st = i * scale;
-				uint8_t y_st = j * scale;
-				uint8_t x_end = x_st + scale;
-				uint8_t y_end = y_st + scale;
-
-				for (uint8_t x = x_st; x < x_end; ++x) {
-					for (uint8_t y = y_st; y < y_end; ++y) {
-						*(ptrScaledPicture + (x * scaled_Width) + y) = dotColor;
+void drv_OLED_Display_ScalePicture( uint8_t *ptrSource, uint8_t base_Width, uint8_t base_Height,
+		                                uint8_t scale, uint8_t *ptrTarget){
+																			
+	if(scale > 0) {  
+		uint8_t scaledWidth = base_Width * scale;
+		for (uint8_t j = 0; j < base_Height; j++) {  	
+			for (uint8_t i = 0; i < base_Width; i++) {
+						
+				uint8_t dotColor = ptrSource[(j * base_Width) + i];
+				
+				for (uint8_t j2 = 0; j2 < scale; j2++) {	   	
+					for (uint8_t i2 = 0; i2 < scale; i2++) {
+						uint8_t x1 = (i * scale) + i2;
+						uint8_t y1 = (j * scale) + j2;
+						ptrTarget[(y1 * scaledWidth) + x1] = dotColor;
 					}
-				}
+				}      	
 			}
-		}
-		
+		}		
 	}
+																			
+																			
 }
 
 
@@ -333,17 +331,17 @@ void drv_OLED_Display_ScalePicture( uint8_t *ptrPicture, uint8_t base_Width, uin
 
 
 void SendCommand(uint8_t command){
-	HAL_GPIO_WritePin(display.CS.port, display.CS.pin, 0);
-	HAL_GPIO_WritePin(display.DC.port, display.DC.pin, SEND_COMMAND);	
+	HAL_GPIO_WritePin(display.CS.port, display.CS.pin, (GPIO_PinState)0);
+	HAL_GPIO_WritePin(display.DC.port, display.DC.pin, (GPIO_PinState)SEND_COMMAND);	
 	HAL_SPI_Transmit(display.spiConfigure, &command, 1, 100);
-	HAL_GPIO_WritePin(display.CS.port, display.CS.pin, 1);
+	HAL_GPIO_WritePin(display.CS.port, display.CS.pin, (GPIO_PinState)1);
 }
 
 void SendData(uint8_t data){
-	HAL_GPIO_WritePin(display.CS.port, display.CS.pin, 0);
-	HAL_GPIO_WritePin(display.DC.port, display.DC.pin, SEND_DATA);	
+	HAL_GPIO_WritePin(display.CS.port, display.CS.pin, (GPIO_PinState)0);
+	HAL_GPIO_WritePin(display.DC.port, display.DC.pin, (GPIO_PinState)SEND_DATA);	
 	HAL_SPI_Transmit(display.spiConfigure, &data, 1, 100);
-	HAL_GPIO_WritePin(display.CS.port, display.CS.pin, 1);
+	HAL_GPIO_WritePin(display.CS.port, display.CS.pin, (GPIO_PinState)1);
 }
 
 void ResetDisplay(uint8_t state){
@@ -351,6 +349,6 @@ void ResetDisplay(uint8_t state){
 	if(state){
 		pinState = 1;
 	}
-	HAL_GPIO_WritePin(display.RES.port, display.RES.pin, pinState);
+	HAL_GPIO_WritePin(display.RES.port, display.RES.pin, (GPIO_PinState)pinState);
 }
 
