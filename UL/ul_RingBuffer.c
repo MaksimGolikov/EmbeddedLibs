@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <UL/ul_RingBuffer.h>
+#include "UL/ul_RingBuffer.h"
 
 
 static uint8_t indexIncrement(uint8_t currentIndex,uint8_t sizeData, uint8_t maxValue);
@@ -34,8 +34,9 @@ RingBuffer_Messages_t ul_RingBuffer_Create(RingBuffer_t *ptrRingBuffer, uint8_t*
 
 
 
-RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* newData, uint16_t dataSize){
+RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* newData){
 	RingBuffer_Messages_t returnValue = initializationError;
+    uint8_t dataSize = strlen( (char*)newData);
 
 	if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
 			returnValue = initializationError;
@@ -176,6 +177,20 @@ RingBuffer_Messages_t ul_RingBuffer_RemovePackage(RingBuffer_t *ptrRingBuffer){
 }
 
 
+RingBuffer_Messages_t ul_RingBuffer_Clear(RingBuffer_t *ptrRingBuffer){
+    RingBuffer_Messages_t returnValue = initializationError;
+
+		if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
+			returnValue = initializationError;
+		} else {
+			ptrRingBuffer->indexRead  = 0;
+		  ptrRingBuffer->indexWrite = 0;
+			ptrRingBuffer->fullness   = 0;
+			returnValue = ok;
+		}
+
+		return returnValue;
+}
 
 
 static uint8_t indexIncrement(uint8_t currentIndex,uint8_t sizeData, uint8_t maxValue) {

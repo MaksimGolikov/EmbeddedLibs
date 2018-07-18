@@ -41,13 +41,11 @@ RingBuffer_Messages_t ul_RingBuffer_Create(RingBuffer_t *ptrRingBuffer, uint8_t*
 /* Function Push and Pop should use to sate and get one byte.*/
 /**
  * @brief function for save one byte to buffer
- * @param ptrRingBuffer - pointer to necessary ring buffer
+ * @param ptrRingBuffer - pointer to necessary riing buffer
  * @param newData       - pointer to necessary data
- * @param dataSize      - size of sent data
  * @return              - operation state
  */
-RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* newData, uint16_t dataSize);
-
+RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* newData);
 /**
  * @brief function for get data from ring buffer
  * @param ptrRingBuffer - pointer to necessary ring buffer
@@ -88,3 +86,9 @@ RingBuffer_Messages_t ul_RingBuffer_FinalizePackage(RingBuffer_t *ptrRingBuffer)
  */
 RingBuffer_Messages_t ul_RingBuffer_RemovePackage(RingBuffer_t *ptrRingBuffer);
 
+/**
+ * @brief function for clear ring buffer
+ * @param ptrRingBuffer - pointer to necessary ring buffer 
+ * @return              - operation state
+ */
+RingBuffer_Messages_t ul_RingBuffer_Clear(RingBuffer_t *ptrRingBuffer);
