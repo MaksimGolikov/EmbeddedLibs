@@ -6,15 +6,16 @@
  */
 
 
-#include "drv_TouchBoard.h"
+#include "DRV/drv_TouchBoard.h"
 
 
 
-typedef struct={
+typedef struct {
   GPIO_TypeDef       *port;
   uint8_t            pin;
   uint8_t            detectLevel;
   TouchBoardState_t  sensorState;   
+	
 }TouchBoadrDescription_t;
 
 
@@ -30,7 +31,7 @@ int8_t drv_TouchBard_Init(touchBoard_t nameTouch, GPIO_TypeDef *port, uint8_t pi
         touchBoards[nameTouch].port        = port;
         touchBoards[nameTouch].pin         = pin;
         touchBoards[nameTouch].detectLevel = detectLevel;
-        touchBoards[]nameTouch.sensorState = TouchNotDetect;
+        touchBoards[nameTouch].sensorState = TouchNotDetect;
         initState = 0;
     }
 
@@ -50,8 +51,8 @@ TouchBoardState_t drv_TouchBard_GetState(touchBoard_t nameTouch){
 
 
 void drv_TouchBard_Run(){
-	for(uint8_t sensor = 0; sensor < Touch_Amount; sensor ++){
-        uint8_t pinState = HAL_GPIO_ReaadPin(touchBoards[sensor].port, (GPIO_PIN_0 << touchBoards[sensor].pin) );
+	for(uint8_t sensor = 0; sensor < Touch_Amount; sensor ++){		
+        uint8_t pinState = HAL_GPIO_ReadPin(touchBoards[sensor].port, (GPIO_PIN_0 << touchBoards[sensor].pin) );
          if(pinState == touchBoards[sensor].detectLevel){
               touchBoards[sensor].sensorState = TouchDetect;
          }else{
