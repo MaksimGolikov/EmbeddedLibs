@@ -16,15 +16,19 @@ enum{
 COLOR_WHITE		  =	0xFFFF,
 COLOR_BLACK		  =	0x0000,
 COLOR_RED		    =	0xF800,
-COLOR_PURP		  =	0xC815,
+COLOR_DRED      = 0xE000,
 COLOR_GREEN		  =	0x07E0,
+COLOR_DGREEN	  =	0x7e00,
 COLOR_BLUE		  =	0x04FF,
 COLOR_YELLOW	  =	0xFFE0,
-COLOR_SIEMENS  	=	0x06F7,
-COLOR_MAGENTA  	=	0xf81f,
-COLOR_LMAGENTA	=	0xfc1f,
-COLOR_TURQUOISE	=	0x36b9,
-COLOR_DGREEN	  =	0x7e00
+COLOR_DGRAY     = 0x94B2,
+COLOR_GRAY      = 0xB596,
+COLOR_ORANGE    = 0xFB20,
+COLOR_LBLUE     = 0x64DF,
+COLOR_GOLD      = 0xFE46,
+COLOR_SILVER    = 0x94B2,
+COLOR_BRONZE    = 0x9B83,
+COLOR_VIOLET    = 0x9212,
 };
 
 
@@ -43,9 +47,9 @@ COLOR_DGREEN	  =	0x7e00
  * @param _pinDC    pin for DC
  * @param _pinRES   pin for RES
  */
-void drv_OLED_Display_Init(SPI_HandleTypeDef *spi,
-						               GPIO_TypeDef *_portCS, GPIO_TypeDef *_portDC, GPIO_TypeDef *_portRES,
-                           uint8_t _pinCS, uint8_t _pinDC, uint8_t _pinRES);
+void drv_OLED_Display_Init( SPI_HandleTypeDef *spi,
+						    GPIO_TypeDef *_portCS, GPIO_TypeDef *_portDC, GPIO_TypeDef *_portRES,
+                            uint8_t _pinCS, uint8_t _pinDC, uint8_t _pinRES);
 
 
 /**
@@ -70,8 +74,8 @@ void drv_OLED_Display_FillScreen(uint16_t color);
  * @param color  color which will use
  */
 void drv_OLED_Display_FillRectangle(uint8_t x_st, uint8_t y_st,
-		                                uint8_t x_end, uint8_t y_end,
-								                    uint16_t color);
+		                            uint8_t x_end, uint8_t y_end,
+								    uint16_t color);
 
 
 /**
@@ -120,8 +124,8 @@ void  drv_OLED_Display_DrawImage(uint8_t x_st,  uint8_t y_st,
  * @param scale       necessary value of scale
  * @param ptrScaledPicture pointer to mass which should contain scaled image
  */
-void drv_OLED_Display_ScalePicture( uint8_t *ptrPicture, uint8_t base_Width, uint8_t base_Height,
-		                                uint8_t scale, uint8_t *ptrScaledPicture);
+void drv_OLED_Display_ScalePicture( uint8_t x_st,  uint8_t y_st, uint8_t *ptrSource, uint8_t base_Height, uint8_t  base_Width,
+                                    uint8_t scale, uint16_t color);
 
 
 #endif /* DRV_OLED_DISPLAY_H_ */
