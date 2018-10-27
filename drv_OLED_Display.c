@@ -32,8 +32,6 @@ typedef struct{
 
 displayControl_t display;
 
-void SendCommand(uint8_t command);
-void SendData(uint8_t data);
 
 void ResetDisplay(void);
 void OLED_Select(void);
@@ -131,29 +129,42 @@ void drv_OLED_Display_Init(SPI_HandleTypeDef *spi,
 	WriteDispSpiSync(&cmd, 1, SEND_COMMAND);
 	WriteDispSpiSync(data, sizeof(data), SEND_DATA);
 
-SendCommand(COMMAND_SETGRAY);
+
+
+
+
+	uint8_t inf[65] = {0};
+        uint8_t inx = 0;
 	for(uint8_t i = 5; i < 23; ++i){
-		SendData(i);
+		inf[inx] = i;
+                inx ++;
 	}
-	SendData(0x18);
-	SendData(0x1a);
-	SendData(0x1b);
-	SendData(0x1C);
-	SendData(0x1D);
-	SendData(0x1F);
-	SendData(0x21);
-	SendData(0x23);
-	SendData(0x25);
-	SendData(0x27);
+	inf[inx] = 0x18; inx ++;
+	inf[inx] = 0x1a; inx ++;
+	inf[inx] = 0x1b; inx ++;
+	inf[inx] = 0x1c; inx ++;
+	inf[inx] = 0x1d; inx ++;
+	inf[inx] = 0x1f; inx ++;
+	inf[inx] = 0x21; inx ++;
+	inf[inx] = 0x23; inx ++;
+	inf[inx] = 0x25; inx ++;
+	inf[inx] = 0x27; inx ++;
 	for (uint8_t i = 42; i <= 72; i += 3) {
-		SendData(i);
+		inf[inx] = i;
+                inx ++;
 	}
 	for (uint8_t i = 76; i <= 120; i += 4) {
-		SendData(i);
+		inf[inx] = i;
+                inx ++;
 	}
 	for (uint8_t i = 125; i <= 180; i += 5) {
-		SendData(i);
+		inf[inx] = i;
+                inx ++;
 	}
+
+	cmd = COMMAND_SETGRAY;
+	WriteDispSpiSync(&cmd, 1, SEND_COMMAND);
+	WriteDispSpiSync(inf, inx, SEND_DATA);
 
 	data[0] = 0x32;
 	cmd = COMMAND_PRECHARGE;
@@ -358,17 +369,7 @@ void drv_OLED_Display_ScalePicture( uint8_t x_st,  uint8_t y_st, uint8_t *ptrSou
 		}
 	}	
 }
-																	
-
-void SendCommand(uint8_t command){
-	HAL_GPIO_WritePin(display.DC.port, GPIO_PIN_0 << display.DC.pin, (GPIO_PinState)SEND_COMMAND);	
-	HAL_SPI_Transmit(display.spiConfigure, &command, 1, 100);	
-}
-
-void SendData(uint8_t data){
-	HAL_GPIO_WritePin(display.DC.port, GPIO_PIN_0 << display.DC.pin, (GPIO_PinState)SEND_DATA);	
-	HAL_SPI_Transmit(display.spiConfigure, &data, 1, 100);
-}
+																
 
 void OLED_SetAddressWindow(uint8_t x_st, uint8_t y_st, uint8_t x_end, uint8_t y_end) {
     // column address set
@@ -426,13 +427,13 @@ HAL_StatusTypeDef SendOLED(uint8_t *data, uint16_t size, bool CmdData){
 }
 
 void ResetDisplay(void){
-	HAL_GPIO_WritePin(display.RES.port, display.RES.pin, (GPIO_PinState)RESET);
+	HAL_GPIO_WritePin(display.RES.port, GPIO_PIN_0 << display.RES.pin, (GPIO_PinState)RESET);
 	HAL_Delay(50);
-	HAL_GPIO_WritePin(display.RES.port, display.RES.pin, (GPIO_PinState)SET);
+	HAL_GPIO_WritePin(display.RES.port, GPIO_PIN_0 << display.RES.pin, (GPIO_PinState)SET);
 	HAL_Delay(50);
-	HAL_GPIO_WritePin(display.RES.port, display.RES.pin, (GPIO_PinState)RESET);
+	HAL_GPIO_WritePin(display.RES.port, GPIO_PIN_0 << display.RES.pin, (GPIO_PinState)RESET);
 	HAL_Delay(50);
-	HAL_GPIO_WritePin(display.RES.port, display.RES.pin, (GPIO_PinState)SET);
+	HAL_GPIO_WritePin(display.RES.port, GPIO_PIN_0 << display.RES.pin, (GPIO_PinState)SET);
 	HAL_Delay(50);
 }
 
