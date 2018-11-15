@@ -21,10 +21,10 @@ typedef enum{
 
 
 typedef enum{
-  mode_OFF,
-	mode_ON,
-  mode_BLINK ,
-  mode_BLINK_SLIDE	
+  rgb_mode_OFF,
+  rgb_mode_ON,
+  rgb_mode_BLINK ,
+  rgb_mode_BLINK_SLIDE
 }rgbLed_WorkMode_t;
 
  typedef enum{
@@ -37,6 +37,11 @@ typedef enum{
 	 color_Amount
  }PossibleColors_t;
  
+
+ typedef enum {
+	 SWITCH_BY_HIGH,
+	 SWITCH_BY_LOW
+ }rgbLed_SwitchMode_t;
 /**
 *@brief function for should be cal first
 *@param timer_Red    pointer to timer which should control red color
@@ -46,9 +51,11 @@ typedef enum{
 *@param timer_Blue    pointer to timer which should control blue color
 *@param channel_Blue  number of channel at timer_Blue
 */
-void drv_LedRGB_Init(TIM_HandleTypeDef* timer_Red, uint8_t channel_Red,
+void drv_LedRGB_Init(rgbLeds_t name,
+		             TIM_HandleTypeDef* timer_Red, uint8_t channel_Red,
                      TIM_HandleTypeDef* timer_Green, uint8_t channel_Green,
-					           TIM_HandleTypeDef* timer_Blue,  uint8_t channel_Blue);
+					 TIM_HandleTypeDef* timer_Blue,  uint8_t channel_Blue,
+					 rgbLed_SwitchMode_t turnOnMode);
 
 
 /**
@@ -97,7 +104,7 @@ void  drv_LedRGB_SetColor(rgbLeds_t led, uint16_t  redPart, uint16_t greenPart, 
 *@param name of necessary led
 *@param color - necessary color 
 */				 
-void  drv_LedRGB_SetDefineColor(rgbLeds_t led, uint8_t  color);
+void  drv_LedRGB_SetDefinedColor(rgbLeds_t led, PossibleColors_t  color);
 
 
 /**
