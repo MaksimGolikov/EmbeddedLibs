@@ -8,6 +8,7 @@
  #include "DRV/drv_LedRGB.h"
  #include "DRV/drv_SysClock.h"
  
+ 
  #define STEP_INTENSITY    1
  
 
@@ -30,6 +31,8 @@ typedef struct{
 }color_t;
 
 typedef struct{
+	uint8_t             color;
+	
 	pwm_color_t         red;
 	pwm_color_t         green;
 	pwm_color_t         blue;
@@ -41,7 +44,7 @@ typedef struct{
 	uint32_t            startBlinkTime;
 
 	color_t             current_PWM;
-	color_t		        max_PWM;
+	color_t		          max_PWM;
 }LedDescription_t;
 
 
@@ -52,19 +55,20 @@ typedef struct{
  
  static uint16_t defineColors [color_Amount][3] = {
 	 // Red_part  Green_part  Blue_part	 
-	     {100,          0,        0  },  //Red
-		 {0,            0,        100},  //Blue
-		 {100,          100,      0  },  //Yellow
-		 {0,            100,      0  },  //Green
-         {80,           30,       0  },	 //Orange
-		 {100,          100,      100}   //White
+	   {20,          0,       0  },  //Red 
+	   {0,           0,       20 },  //Blue
+	   {20,          4,       0  },  //Yellow
+	   {0,           20,      0  },  //Green
+	   {20,          0,       20 },  //Violet
+       {20,          2,       0  },	 //Orange
+	   {20,          20,      20 }   //White
  };
  
  
 
  static LedDescription_t leds[rgb_Amount] = {
-/*  pwmRED  pwmGREEN  pwmBLUE    LounchBy            mode              state        period   startTime   currentPULS   maxPULS*/
-  {  {0},     {0},      {0},    SWITCH_BY_HIGH,  rgb_mode_BLINK,    rgb_mode_OFF,    1000,       0,         {0},          {0} }// rgb_INDICATE
+/*     color           pwmRED  pwmGREEN  pwmBLUE    LounchBy            mode              state        period   startTime   currentPULS   maxPULS*/
+  {  color_WHITE,       {0},     {0},      {0},    SWITCH_BY_HIGH,  rgb_mode_BLINK,    rgb_mode_OFF,    1000,       0,         {0},          {0} }// rgb_INDICATE
  };
  
  
@@ -147,6 +151,7 @@ uint32_t drv_LedRGB_GetBlinkPeriod(void){
 //
 void  drv_LedRGB_SetColor(rgbLeds_t led, uint16_t  redPart, uint16_t greenPart, uint16_t bluePart){
 	if(led < rgb_Amount){
+				
 		leds[led].current_PWM.red   = redPart;
 		leds[led].current_PWM.green = greenPart;
 		leds[led].current_PWM.blue  = bluePart;
@@ -166,6 +171,7 @@ void  drv_LedRGB_SetColor(rgbLeds_t led, uint16_t  redPart, uint16_t greenPart, 
 //
 void  drv_LedRGB_SetDefinedColor(rgbLeds_t led, PossibleColors_t  color){
 	if(color < color_Amount && led < rgb_Amount){
+		leds[led].color = color;
 		drv_LedRGB_SetColor(led, defineColors[color][0], defineColors[color][1], defineColors[color][2]);
 	}
 }
@@ -181,7 +187,13 @@ void drv_LedRGB_GetColor(rgbLeds_t led, uint16_t  *redPart, uint16_t *greenPart,
 	}
 }
 
-
+PossibleColors_t  drv_LedRGB_GetDefinedColor(rgbLeds_t led){
+	PossibleColors_t color = color_Amount;
+	if(led < rgb_Amount){
+		color = leds[led].color;
+	}
+	return color;
+}
 
 //
 void drv_LedRGB_Run(void){
@@ -197,7 +209,7 @@ void drv_LedRGB_Run(void){
 					     HAL_TIM_PWM_Stop(leds[led].blue.timer,  leds[led].blue.channel);
 					 }else{
 						 leds[led].state = rgb_mode_ON;
-						 LounchPWM(led);
+						 LounchPWM((rgbLeds_t)led);
 					 }
 					 leds[led].startBlinkTime = drv_SysClock_GetCurrentTime();
 			 }
@@ -233,17 +245,16 @@ void drv_LedRGB_Run(void){
 								 leds[led].state = rgb_mode_OFF;
 						 }
 				 }
-				 Set_Puls(led, RED);
-				 Set_Puls(led, GREEN);
-				 Set_Puls(led, BLUE);
+				 Set_Puls((rgbLeds_t)led, RED);
+				 Set_Puls((rgbLeds_t)led, GREEN);
+				 Set_Puls((rgbLeds_t)led, BLUE);
 
-			     LounchPWM(led);
+			     LounchPWM((rgbLeds_t)led);
 			     leds[led].startBlinkTime = drv_SysClock_GetCurrentTime();
 			}
 		}break;
 		default:
-			continue;
-			break;
+			continue;			
 		}
    }
 }
@@ -252,7 +263,8 @@ void drv_LedRGB_Run(void){
  
 //===
 void LounchPWM(rgbLeds_t led){
-	if(leds[led].current_PWM.red){
+
+	if(leds[led].current_PWM.red){		
 		HAL_TIM_PWM_Start(leds[led].red.timer,  leds[led].red.channel);
 	}else{
 		HAL_TIM_PWM_Stop(leds[led].red.timer,  leds[led].red.channel);
