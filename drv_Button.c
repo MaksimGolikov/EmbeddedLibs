@@ -6,183 +6,154 @@
  */
 
 #include "DRV/drv_Button.h"
-#include "DRV/drv_SysClock.h"
-#include "UL/ul_RingBuffer.h"
+#include "CommonFunctions.h"
 
 
-#define BUTTON_RESET_STATE          10     // count puls for digital filter
-#define BUTTON_SHORT_PRESS_STATE    20     // count puls for digital filter
-
-#define KEY_COUNTER_MAX             60    // max quantity of counter
-#define KEY_COUNTER_MIN             5      // min quantity of counter
-
-#define SIZE_BUTTON_BUFFER          10     // bits
+#define KEY_COUNTER_MAX             60  
+#define KEY_COUNTER_MIN             5
 
 
-const static uint16_t TIMEOUTS_OF_PRESS []={
-		0, 1, 2000, 3000, 5000, 10000, 20000,30000
-};
-
-enum{
-	key_reset,
-	key_set
-};
-
-typedef struct{
-	GPIO_TypeDef      *port;
-	uint8_t            pin;
-
-	Button_Event_t     buttonEvent;
-	uint8_t            keyState;
-
-	uint32_t           startTime;
-    uint8_t            counter;
-	ButtonWorkMode_t   workMode;
-
-	uint8_t            buffer[SIZE_BUTTON_BUFFER];
-	RingBuffer_t       eventsBuffer;
-
-}Key_struct_t;
+static uint16_t *TIMEOUTS_OF_PRESS   = 0;
+static uint8_t  button_events_Amount = 0;
 
 
-static Key_struct_t Buttons[buttons_Amount]={
-	 // port   pin     baseEvent             keyState    startTime     counter           workMode       buffer
-     {GPIOA, 0,   BUTTON_RESET_EVENT,       key_reset,     0,      KEY_COUNTER_MIN,     ON_PRESS,       {0} },
-	 {GPIOA, 0,   BUTTON_RESET_EVENT,       key_reset,     0,      KEY_COUNTER_MIN,     ON_PRESS,       {0} },
-     {GPIOA, 0,   BUTTON_RESET_EVENT,       key_reset,     0,      KEY_COUNTER_MIN,     ON_PRESS,       {0} },
-
-};
+void CountOfHighLevel(ButtonContext_t *button);
 
 
-void CountOfHighLevel(Key_struct_t *button);
+int8_t drv_Button_Init(ButtonContext_t *keyDeff, ButtonWorkMode_t mode, 
+                       void *handlerPin, void *handlerTimer, uint16_t *TimeMass,
+					   uint8_t numberOfEvents, uint8_t jitterDelay){
 
+	int8_t statusOperation = -1;
 
-
-int8_t drv_Button_Init(buttons_t buttonName,GPIO_TypeDef *port, uint8_t  pin, ButtonWorkMode_t mode){
-	int8_t status = -1;
+	if(TIMEOUTS_OF_PRESS == 0){
+	   TIMEOUTS_OF_PRESS    = TimeMass;
+		 button_events_Amount = numberOfEvents;
+	}	
 	
-	if(buttonName < buttons_Amount){
-		Buttons[buttonName].port      = port;
-		Buttons[buttonName].pin       = pin;
-		Buttons[buttonName].startTime = drv_SysClock_GetCurrentTime();
-		Buttons[buttonName].workMode  = mode;
-
-		ul_RingBuffer_Create( &Buttons[buttonName].eventsBuffer, Buttons[buttonName].buffer, SIZE_BUTTON_BUFFER);
-		status = 1;
+	if(handlerPin != 0 && handlerTimer != 0){
+		keyDeff->PinStateReader     = handlerPin;
+		keyDeff->GetTime            = handlerTimer;
+		keyDeff->workMode           = mode;
+		keyDeff->buttonEvent        = 0;
+		keyDeff->keyState           = key_reset;
+		keyDeff->startTime          = keyDeff->GetTime();
+		keyDeff->jitter_status_pin  = 0;
+		keyDeff->jitter_time_delay  = 0;
+		keyDeff->jitter_timeout     = jitterDelay;	
+		statusOperation             = 1;
+		keyDeff->Callback           = 0;
 	}
-	return status;
+	return statusOperation;
 }
 
+void drv_Button_InitCallback(ButtonContext_t *keyDeff, void* ptrCallback){
+	if(keyDeff != 0 && ptrCallback != 0){
+         keyDeff->Callback = ptrCallback;
+	}
+}
 
+void drv_Button_Run(ButtonContext_t *ptrToMass, uint8_t countElOfMass){
 
-void drv_Button_Run(void){
-	
-	for(uint8_t i = 0; i < buttons_Amount; i++){
-		 CountOfHighLevel(&Buttons[i]);			
-		 uint8_t val = 0;
-		 switch(Buttons[i].keyState){
+	 for(uint8_t but = 0; but < countElOfMass; but ++){
+		 CountOfHighLevel( &ptrToMass[but] );
+
+		switch(ptrToMass[but].keyState){
 			 case key_reset:{
-				 if( Buttons[i].counter > BUTTON_SHORT_PRESS_STATE ){
-					 Buttons[i].keyState = key_set;					
-					 Buttons[i].startTime = drv_SysClock_GetCurrentTime();
-					 
-					 if( Buttons[i].workMode == ON_PRESS){
-						 val = BUTTON_SHORT_EVENT;
-						 ul_RingBuffer_Push( &Buttons[i].eventsBuffer, &val, sizeof(val) );
-						 Buttons[i].buttonEvent = BUTTON_SHORT_EVENT;
-					 }					 
-				 }				 
-			 }break;
-			 case key_set:{
-				 if(Buttons[i].workMode == ON_PRESS){
-					 if( Buttons[i].counter < BUTTON_RESET_STATE ){
-						 Buttons[i].keyState = key_reset;
-						 val = BUTTON_SHORT_EVENT;
-						 ul_RingBuffer_Push( &Buttons[i].eventsBuffer, &val, sizeof(val) );
-						 Buttons[i].buttonEvent = BUTTON_RESET_EVENT;
-					 }
-					 
-					 for(uint8_t ev = BUTTON_2S_EVENT; ev < button_events_Amount; ev ++){
-						 if( drv_SysClock_IsTimeSpent(Buttons[i].startTime, TIMEOUTS_OF_PRESS[ev]) &&
-							 Buttons[i].keyState != key_reset && Buttons[i].buttonEvent < ev){
+				 if( ptrToMass[but].startTime > 0 && IsTimeSpent(ptrToMass[but].startTime, TIMEOUTS_OF_PRESS[1])){
+					 ptrToMass[but].keyState  = key_set;				
 
-							 val = ev;
-							 ul_RingBuffer_Push( &Buttons[i].eventsBuffer, &val , sizeof(val));
-							 Buttons[i].buttonEvent = ev;
+					 if( ptrToMass[but].workMode == ON_PRESS){
+						 ptrToMass[but].buttonEvent = 1;
+						 if(ptrToMass[but].Callback != 0){
+						 	ptrToMass[but].Callback(ptrToMass[but].buttonEvent);
 						 }
 					 }
 				 }
-				 if(Buttons[i].workMode == ON_RELEASE){
-					 if( Buttons[i].counter < BUTTON_RESET_STATE ){
-					   Buttons[i].keyState = key_reset;
-
-					   uint32_t timeSpent = drv_SysClock_GetCurrentTime() - Buttons[i].startTime;
-
-					   for(uint8_t ev = BUTTON_2S_EVENT; ev < button_events_Amount; ev ++){
-						 if( timeSpent >= TIMEOUTS_OF_PRESS[ev] ){
-							 val = ev;
-							 ul_RingBuffer_Push( &Buttons[i].eventsBuffer, &val , sizeof(val));
-							 Buttons[i].buttonEvent = ev;
+			 }break;
+			 case key_set:{
+				 if(ptrToMass[but].workMode == ON_PRESS){
+					 if( ptrToMass[but].startTime == 0 ){
+						 ptrToMass[but].keyState    = key_reset;
+						 ptrToMass[but].buttonEvent = 0;
+						 if(ptrToMass[but].Callback != 0){
+						 	ptrToMass[but].Callback(ptrToMass[but].buttonEvent);
 						 }
+					 }
+					 for(uint8_t ev = 2; ev < button_events_Amount; ev ++){
+						 if( IsTimeSpent(ptrToMass[but].startTime, TIMEOUTS_OF_PRESS[ev]) &&
+								 ptrToMass[but].keyState != key_reset && ptrToMass[but].buttonEvent < ev){
+
+							ptrToMass[but].buttonEvent = ev;
+							if(ptrToMass[but].Callback != 0){
+						 	    ptrToMass[but].Callback(ptrToMass[but].buttonEvent);
+						    }
+						 }
+					 }
+				 }
+				 if(ptrToMass[but].workMode == ON_RELEASE){
+					 if( ptrToMass[but].startTime == 0){
+						 ptrToMass[but].keyState = key_reset;
+
+					   uint32_t timeSpent = ptrToMass[but].GetTime() - ptrToMass[but].startTime;
+					   for(uint8_t ev = 1; ev < button_events_Amount; ev ++){
+							 if( timeSpent >= TIMEOUTS_OF_PRESS[ev] ){
+								 ptrToMass[but].buttonEvent = ev;
+								if(ptrToMass[but].Callback != 0){
+						 	       ptrToMass[but].Callback(ptrToMass[but].buttonEvent);
+						        }
+							 }
 					   }
-					   ul_RingBuffer_Push( &Buttons[i].eventsBuffer, &val , sizeof(val));
-					}
+					 }
 				 }
 			 }break;
 			 default:
-				 Buttons[i].keyState = key_reset;
+				 ptrToMass[but].keyState = key_reset;
 				 break;
-			}				
-   }
-		 
- }
+			}
+	 }
+}
 
 
-
-Button_Event_t  drv_Button_GetEvent(buttons_t buttonNumber){
-	Button_Event_t buttonState  = BUTTON_RESET_EVENT;
-	uint16_t       size = 0;
-	
-	if(buttonNumber < buttons_Amount){
-		if(Buttons[(uint8_t)buttonNumber].eventsBuffer.fullness > 0){
-			uint8_t readData = 0;
-			ul_RingBuffer_Pop( &Buttons[(uint8_t)buttonNumber].eventsBuffer, &readData, &size);
-			buttonState = (Button_Event_t)readData;
-		}		
+uint8_t  drv_Button_GetEvent(ButtonContext_t *ptrButton){
+	uint8_t event = 0;
+	if(ptrButton != 0){
+		event = ptrButton->buttonEvent;
 	}
+
+	return event;
+}
+
+
+bool  drv_Button_IsButtonPressed(ButtonContext_t *ptrButton){
+	bool buttonState = 0;
+	if(ptrButton != 0){
+		buttonState = (uint8_t)ptrButton->keyState;
+	}
+
 	return buttonState;
 }
 
 
-uint8_t  drv_Button_IsButtonPressed(buttons_t buttonNumber){
-	return Buttons[(uint8_t)buttonNumber].keyState;
-}
 
+void CountOfHighLevel(ButtonContext_t *button){
 
-uint32_t drv_Button_GetTimeOfLongPress(buttons_t buttonNumber){ 
-	uint32_t returnedTime = 0;
-	if(Buttons[(uint8_t)buttonNumber].keyState){
-		returnedTime = drv_SysClock_GetCurrentTime() - Buttons[(uint8_t)buttonNumber].startTime;
-	} 
-	return returnedTime; 
-}
-
-
-
-void CountOfHighLevel(Key_struct_t *button){	
-	uint8_t pinState = HAL_GPIO_ReadPin(button->port, GPIO_PIN_0 << button->pin );
-	
-	if(pinState){
-		button->counter ++;		
-	}else{
-		button->counter --;
-	}		
- 
-	if(button->counter > KEY_COUNTER_MAX){
-		button->counter = KEY_COUNTER_MAX;
-	}
-	if(button->counter < KEY_COUNTER_MIN){
-		button->counter = KEY_COUNTER_MIN;
+	if(button != 0){
+		uint8_t pinState = button->PinStateReader();    
+		
+		if(pinState != button->jitter_status_pin)
+		{
+			button->jitter_time_delay = button->GetTime();
+			button->jitter_status_pin = pinState;			
+		}
+		if(IsTimeSpent( button->jitter_time_delay, button->jitter_timeout)){
+		   if(pinState && button->startTime == 0){
+			   button->startTime = button->GetTime();
+			 }
+			 if(!pinState){
+			    button->startTime = 0;
+			 }
+		}
 	}
 	
 }
