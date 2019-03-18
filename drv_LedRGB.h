@@ -11,9 +11,6 @@
 
 #include "stm32f1xx_hal.h"
 #include <stdint.h>
-
-
-
 typedef enum{
 	rgb_INDICATE,
 	rgb_Amount	
@@ -32,6 +29,7 @@ typedef enum{
 	 color_BLUE,
 	 color_YELLOW,
 	 color_GREEN,
+	 color_VIOLET,
 	 color_ORANGE,
 	 color_WHITE,
 	 color_Amount
@@ -116,13 +114,17 @@ void  drv_LedRGB_SetDefinedColor(rgbLeds_t led, PossibleColors_t  color);
 */	
 void drv_LedRGB_GetColor(rgbLeds_t led, uint16_t  *redPart, uint16_t *greenPart, uint16_t *bluePart);
 
+/**
+*@brief function for get definded color of rgb led
+*@param name of necessary led
+*@param color - necessary color 
+*/				 
+PossibleColors_t  drv_LedRGB_GetDefinedColor(rgbLeds_t led);
 
 /**
 *@brief function for control led state
 */
 void drv_LedRGB_Run(void);
-
-
 
 
 #endif
