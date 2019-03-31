@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 #include "stm32f4xx_hal.h"
+#include <DisplayDescribe.h>
+
 
 enum{
 	COLOR_WHITE		  =	0xFFFF,
@@ -32,51 +34,10 @@ enum{
 
 
 
-
-//Possible type of elements
-enum{
-	ELEMENT_PICTURE,
-	ELEMENT_STATUSBAR,
-	ELEMENT_ANIMATION,
-	ELEMENT_Amount
-};
-
-// Names of existed statusbar
-enum{
-	LOAD_STATUSBAR,
-	Amount_STATUSBAR
-};
-
-// Names of existed picture
-enum{
-    P1_PICTURE,
-	P2_PICTURE,
-	Amount_PICTURE
-};
-
-// Names of existed animations
-enum{
-	LOAD_ANIMATION,
-	Amount_ANIATION
-};
-
-
-
-enum{
-	FIRST_SCREEN,
-	SECOND_SCREEN,
-	Amount_SCREEN
-};
-
-
-
-
-
 void DisplayUtility_Init(SPI_HandleTypeDef *spi, GPIO_TypeDef *PortCS,  uint8_t pinCS,
 												 GPIO_TypeDef *PortRES, uint8_t pinRES,
 												 GPIO_TypeDef *PortDC,  uint8_t pinDC
 												 );
-
 
 
 void DisplayUtility_ChangeData(uint8_t elType, uint8_t elName, uint16_t value);
@@ -111,5 +72,9 @@ int8_t DisplayUtility_Config_Animation(uint8_t name,
 									   uint16_t color, uint16_t sizeImage,
 									   uint8_t numberOfImages, uint32_t timeoutChanges);
 
-
+int8_t DisplayUtility_Config_Label(uint8_t name, uint8_t isItTtext,
+								   uint8_t x_pos, uint8_t y_pos,
+								   uint8_t scale,
+								   uint8_t *ptrToPicture, uint8_t length,
+								   uint16_t color);
 #endif /* DISPLAYUTILITY_H_ */
