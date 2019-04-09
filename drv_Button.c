@@ -7,7 +7,7 @@
 
 #include "DRV/drv_Button.h"
 #include "CommonFunctions.h"
-
+#include <stddef.h>
 
 #define KEY_COUNTER_MAX             60  
 #define KEY_COUNTER_MIN             5
@@ -31,7 +31,7 @@ int8_t drv_Button_Init(ButtonContext_t *keyDeff, ButtonWorkMode_t mode,
 		 button_events_Amount = numberOfEvents;
 	}	
 	
-	if(handlerPin != 0 && handlerTimer != 0){
+	if(handlerPin != 0 && handlerTimer != NULL){
 		keyDeff->PinStateReader     = handlerPin;
 		keyDeff->GetTime            = handlerTimer;
 		keyDeff->workMode           = mode;
@@ -43,15 +43,24 @@ int8_t drv_Button_Init(ButtonContext_t *keyDeff, ButtonWorkMode_t mode,
 		keyDeff->jitter_timeout     = jitterDelay;	
 		statusOperation             = 1;
 		keyDeff->Callback           = 0;
+		keyDeff->workLevel          = 1;
 	}
 	return statusOperation;
 }
 
 void drv_Button_InitCallback(ButtonContext_t *keyDeff, void* ptrCallback){
-	if(keyDeff != 0 && ptrCallback != 0){
+	if(keyDeff != NULL && ptrCallback != NULL){
          keyDeff->Callback = ptrCallback;
 	}
 }
+
+
+void drv_Button_RedefineWorkLevel(ButtonContext_t *keyDeff, uint8_t level){
+    if(keyDeff != NULL){
+         keyDeff->Callback = ptrCallback;
+	}
+}
+
 
 void drv_Button_Run(ButtonContext_t *ptrToMass, uint8_t countElOfMass){
 
@@ -117,7 +126,7 @@ void drv_Button_Run(ButtonContext_t *ptrToMass, uint8_t countElOfMass){
 
 uint8_t  drv_Button_GetEvent(ButtonContext_t *ptrButton){
 	uint8_t event = 0;
-	if(ptrButton != 0){
+	if(ptrButton != NULL){
 		event = ptrButton->buttonEvent;
 	}
 
@@ -127,7 +136,7 @@ uint8_t  drv_Button_GetEvent(ButtonContext_t *ptrButton){
 
 bool  drv_Button_IsButtonPressed(ButtonContext_t *ptrButton){
 	bool buttonState = 0;
-	if(ptrButton != 0){
+	if(ptrButton != NULL){
 		buttonState = (uint8_t)ptrButton->keyState;
 	}
 
@@ -138,10 +147,10 @@ bool  drv_Button_IsButtonPressed(ButtonContext_t *ptrButton){
 
 void CountOfHighLevel(ButtonContext_t *button){
 
-	if(button != 0){
+	if(button != NULL){
 		uint8_t pinState = button->PinStateReader();    
 		
-		if(pinState != button->jitter_status_pin)
+		if( (pinState == keyDeff->workLevel) && (pinState != button->jitter_status_pin))
 		{
 			button->jitter_time_delay = button->GetTime();
 			button->jitter_status_pin = pinState;			
