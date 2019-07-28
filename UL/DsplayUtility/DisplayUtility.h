@@ -75,6 +75,6 @@ int8_t DisplayUtility_Config_Animation(uint8_t name,
 int8_t DisplayUtility_Config_Label(uint8_t name, uint8_t isItTtext,
 								   uint8_t x_pos, uint8_t y_pos,
 								   uint8_t scale,
-								   uint8_t *ptrToPicture, uint8_t length,
+								   const char *ptrToPicture, uint8_t length,
 								   uint16_t color);
 #endif /* DISPLAYUTILITY_H_ */

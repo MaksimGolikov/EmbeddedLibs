@@ -8,22 +8,24 @@
 #include "DisplayUtility.h"
 #include "drv_OLED_Display.h"
 
-//#include "Images.h"
-//#include <string.h>
+#define FONT_WIDTH                5
+#define FONT_HEIGHT               6
 
-
-#define FONT_WIDTH  5
-#define FONT_HEIGHT 6
-
+#define FONT_BIG_LETTERS_START    65
+#define FONT_BIG_LETTERS_END      90
+#define FONT_LITTLE_LETTERS_START 97
+#define FONT_LITTLE_LETTERS_END   122
+#define FONT_NUMBER_START         48
+#define FONT_NUMBER_END           57
 
 __IO uint16_t  FON_COLOR;
 
 
 typedef struct {
 	SPI_HandleTypeDef *spi;
-	GPIO_TypeDef *PortCS;  uint8_t pinCS;
-	GPIO_TypeDef *PortRES; uint8_t pinRES;
-	GPIO_TypeDef *PortDC;  uint8_t pinDC;
+	GPIO_TypeDef      *PortCS;  uint8_t pinCS;
+	GPIO_TypeDef      *PortRES; uint8_t pinRES;
+	GPIO_TypeDef      *PortDC;  uint8_t pinDC;
 }DisplayContext_t;
 
 __IO DisplayContext_t display;
@@ -262,7 +264,7 @@ int8_t DisplayUtility_Config_Animation(uint8_t name,
 int8_t DisplayUtility_Config_Label(uint8_t name, uint8_t isItTtext,
 								   uint8_t x_pos, uint8_t y_pos,
 								   uint8_t scale,
-								   uint8_t *ptrToPicture, uint8_t length,
+								   const char *ptrToPicture, uint8_t length,
 								   uint16_t color){
 
 	int8_t res = -1;
@@ -422,7 +424,37 @@ void Draw_Animation(void* anim){
 	}
 }
 
+uint16_t Get_IndexByID(uint8_t symbvol_id){
+	uint16_t symbvol_index = 0;
+	if(symbvol_id >= FONT_NUMBER_START && symbvol_id <= FONT_NUMBER_END){
+		symbvol_index = symbvol_id - FONT_NUMBER_START;
+	}else if(symbvol_id >= FONT_BIG_LETTERS_START && symbvol_id <= FONT_BIG_LETTERS_END){
+		symbvol_index = (symbvol_id - FONT_BIG_LETTERS_START) + 10;
+	}else if(symbvol_id >= FONT_LITTLE_LETTERS_START && symbvol_id <= FONT_LITTLE_LETTERS_END){
+		symbvol_index = (symbvol_id - FONT_LITTLE_LETTERS_START) + 10;
+	}else{
+		switch(symbvol_id){
+		case 32:
+			symbvol_index = 40;
+			break;
+		case 33:
+			symbvol_index = 38;
+			break;
+		case 45:
+			symbvol_index = 37;
+			break;
+		case 58:
+			symbvol_index = 36;
+			break;
+		default :
+			symbvol_index = 39;
+			break;
+		}
+	}
+	symbvol_index *= 4;
 
+	return symbvol_index;
+}
 void Draw_Label(void* label){
 
 	Label_t *lab = label;
@@ -432,9 +464,9 @@ void Draw_Label(void* label){
 
 		for(uint8_t i = 0; i < lab->length; i++){
 
-			uint8_t mass[4] = {0};
+			uint8_t mass[4]  = {0};
+			uint16_t stIndex = Get_IndexByID(lab->ptrToData[i]);
 
-			uint16_t stIndex = lab->ptrToData[i] * 4;
 			memcpy(mass, &font[stIndex], sizeof(mass));
 
 			 drv_OLED_Display_ScalePicture( (lab->base.pos_x +(i * FONT_WIDTH * lab->scale) ),

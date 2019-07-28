@@ -66,7 +66,7 @@ typedef struct{
 
 	uint16_t      color;
 	uint16_t      length;
-	uint8_t       *ptrToData;
+	char          *ptrToData;
 	uint16_t      value;
 	uint16_t      oldValueDegree;
 	uint8_t       isItText :1;
@@ -136,6 +136,7 @@ enum{
 enum{
 	FIRST_SCREEN,
 	SECOND_SCREEN,
+	THIRD_SCREEN,
 	Amount_SCREEN
 };
 
@@ -154,7 +155,6 @@ static ScreenContext_t screens [Amount_SCREEN] ={
 		   127, 127,
 		   { {ELEMENT_PICTURE,  &pic_els[P1_PICTURE]},
 			 {ELEMENT_STATUSBAR,&stb_els  [LOAD_STATUSBAR]},
-			 //{ELEMENT_ANIMATION,&anim_els [LOAD_ANIMATION]},
 			 {ELEMENT_LABEL,    &label_els[NAME_LABEL]},
 			 {ELEMENT_LABEL,    &label_els[NUMBER_LABEL]},
 		   }
@@ -165,6 +165,13 @@ static ScreenContext_t screens [Amount_SCREEN] ={
 		   127, 127,
 		   { {ELEMENT_PICTURE,  &pic_els[P2_PICTURE]},
 		     {ELEMENT_STATUSBAR,&stb_els[LOAD_STATUSBAR]},
+		   }
+		},
+	//=====
+		{
+		   80,0,
+		   42, 42,
+		   { {ELEMENT_ANIMATION,&anim_els [LOAD_ANIMATION]},
 		   }
 		}
 };
