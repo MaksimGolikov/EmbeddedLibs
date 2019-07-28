@@ -55,9 +55,9 @@ void drv_Button_InitCallback(ButtonContext_t *keyDeff, void* ptrCallback){
 }
 
 
-void drv_Button_RedefineWorkLevel(ButtonContext_t *keyDeff, uint8_t level){
+void drv_Button_RedefineWorkLevel(ButtonContext_t *keyDeff, uint8_t newLevel){
     if(keyDeff != NULL){
-         keyDeff->Callback = ptrCallback;
+         keyDeff->workLevel = newLevel;
 	}
 }
 
