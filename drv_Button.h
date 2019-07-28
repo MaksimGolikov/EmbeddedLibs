@@ -33,6 +33,7 @@ typedef struct{
 	uint8_t            jitter_status_pin;
 
 	ButtonWorkMode_t   workMode;
+	uint8_t            workLevel;
 
 	uint8_t            buttonEvent;
 	ButtonState_t      keyState;
@@ -56,7 +57,7 @@ typedef struct{
 */
 int8_t drv_Button_Init(ButtonContext_t *keyDeff, ButtonWorkMode_t mode, 
                        void *handlerPin, void *handlerTimer, uint16_t *TimeMass,
-											 uint8_t numberOfEvents, uint8_t jitterDelay);
+					   uint8_t numberOfEvents, uint8_t jitterDelay);
 
 
 /**
@@ -67,6 +68,13 @@ int8_t drv_Button_Init(ButtonContext_t *keyDeff, ButtonWorkMode_t mode,
 void drv_Button_InitCallback(ButtonContext_t *keyDeff, void* ptrCallback);
 
 
+
+/**
+* @brief function for redefine level of pin when button pressed
+* @param keyDeff        - pointer to struct which should be contain callback
+* @param level          - new work level
+*/
+void drv_Button_RedefineWorkLevel(ButtonContext_t *keyDeff, uint8_t level);
 
 /**
  * @brief function for monitoring button state
