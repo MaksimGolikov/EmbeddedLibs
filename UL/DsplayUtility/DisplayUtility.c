@@ -18,8 +18,6 @@
 #define FONT_NUMBER_START         48
 #define FONT_NUMBER_END           57
 
-__IO uint16_t  FON_COLOR;
-
 
 typedef struct {
 	SPI_HandleTypeDef *spi;
@@ -71,9 +69,7 @@ void DisplayUtility_Init(SPI_HandleTypeDef *spi, GPIO_TypeDef *PortCS,  uint8_t 
 			                PortCS, PortDC, PortRES,
 			                pinCS, pinDC, pinRES);
 
-	FON_COLOR = COLOR_BLACK;
-
-	drv_OLED_Display_FillScreen(FON_COLOR);
+	drv_OLED_Display_FillScreen(COLOR_BLACK);
 
 	DisplayUtility_SetScreen(FIRST_SCREEN);
 }
@@ -119,7 +115,7 @@ void DisplayUtility_SetScreen(uint8_t screen){
 									screens[selectedScreen].pos_y,
 									screens[selectedScreen].pos_x + screens[selectedScreen].width,
 									screens[selectedScreen].pos_y + screens[selectedScreen].height,
-									FON_COLOR);
+									screens[selectedScreen].fon_color);
 
 
 	for(uint8_t el = 0; el < MAX_EL_ON_SCREEN; el++){
@@ -318,7 +314,7 @@ void Draw_StatusBar(void* stb){
         								    (ptrStb->base.pos_y + 1),
         								    (ptrStb->base.pos_x + ptrStb->base.width - 1),
         								    (ptrStb->base.pos_y + ptrStb->base.height - 1),
-        								    FON_COLOR);
+											screens[selectedScreen].fon_color);
         }
 
 	   uint8_t  start_x;
@@ -340,10 +336,20 @@ void Draw_StatusBar(void* stb){
 		   color    = ptrStb->fillingColor;
 		  }else{
 		   start_x  = ptrStb->base.pos_x + 1;
+		   start_y  = start_y  = ptrStb->base.pos_y + (ptrStb->base.height - heightDelta);
+		   finish_x = ptrStb->base.pos_x + ptrStb->base.width - 1;
+		   finish_y = ptrStb->base.pos_y + ptrStb->base.height - 1;
+		   color    = ptrStb->fillingColor;
+
+		   drv_OLED_Display_FillRectangle( start_x, start_y,
+		  									   finish_x,finish_y,
+		  									   color);
+
+		   start_x  = ptrStb->base.pos_x + 1;
 		   start_y  = ptrStb->base.pos_y + 1;
 		   finish_x = ptrStb->base.pos_x + ptrStb->base.width - 1;
 		   finish_y = ptrStb->base.pos_y + ptrStb->base.height - heightDelta - 1;
-		   color    = FON_COLOR;
+		   color    = screens[selectedScreen].fon_color;
 		  }
 	   }else{
 		  uint16_t  widthDelta = ((ptrStb->currentValue * ptrStb->base.width) / ptrStb->maxValue);
@@ -359,12 +365,23 @@ void Draw_StatusBar(void* stb){
 		   color    = ptrStb->fillingColor;
 		  }else{
 
+			start_x  = ptrStb->base.pos_x + 1;
+		    start_y  = ptrStb->base.pos_y + 1;
+		    finish_x = ptrStb->base.pos_x + widthDelta - 1;
+		    if(ptrStb->currentValue >= ptrStb->maxValue -1){finish_x = ptrStb->base.pos_x + ptrStb->base.width - 1;}
+		    finish_y = ptrStb->base.pos_y + ptrStb->base.height - 1;
+		    color    = ptrStb->fillingColor;
+
+		    drv_OLED_Display_FillRectangle( start_x, start_y,
+										   finish_x,finish_y,
+										   color);
+
 			start_x   = ptrStb->base.pos_x + widthDelta + 1;
 			start_y   = ptrStb->base.pos_y + 1;
 		    finish_x  = ptrStb->base.pos_x + ptrStb->base.width - 1;
 		    finish_y  =  ptrStb->base.pos_y + ptrStb->base.height - 1;
 
-		    color     = FON_COLOR;
+		    color     = screens[selectedScreen].fon_color;
 		  }
 	   }
 
@@ -530,7 +547,7 @@ void Draw_Number(void* label){
 									   lab->base.pos_y,
 									   lab->base.pos_x + FONT_WIDTH*lab->oldValueDegree*lab->scale,
 									   lab->base.pos_y + FONT_HEIGHT * lab->scale,
-									   FON_COLOR);
+									   screens[selectedScreen].fon_color);
 		for(uint8_t itr = (4-drawSchema); itr < 4; itr ++){
 			Draw_Numeral( (lab->base.pos_x + step * element),
 					       lab->base.pos_y,
