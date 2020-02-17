@@ -1,0 +1,14 @@
+#ifndef MODBUS_COMMON_FILE_H
+#define MODBUS_COMMON_FILE_H
+
+
+typedef enum{
+	MB_ERR_STATUS_SUCCESS,
+	MB_ERR_STATUS_UNCORRECT_PARAM,
+
+	MB_ERR_STATUS_RB_FULL,
+	MB_ERR_STATUS_
+}mb_error_list_t;
+
+
+#endif
