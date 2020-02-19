@@ -11,7 +11,8 @@ typedef enum{
 	MB_ERR_STATUS_UNCORRECT_PARAM,  /**< Input parameters not as expected*/
 	MB_ERR_STATUS_BUS_BUISY,
 
-	MB_ERR_STATUS_RB_FULL,          /**< Buffer of message is full*/
+	MB_ERR_STATUS_CRC_FAIL,
+    MB_ERR_STATUS_FAIL_MEM_ALLOCATED,
 
 	MB_ERR_STATUS_NOT_SUPPORTED     /**< Not realized or disabled functionality*/
 }mb_error_t;
@@ -36,31 +37,62 @@ typedef enum{
 }mb_work_mode_t;
 
 
-///**
-// * @brief Pointer to the modbus object
-// */
-//typedef struct modbus_defenition_t* modbuf;
+typedef enum{
+	MB_COMMAND_READ_COIL          = 1,
+	MB_COMMAND_READ_DISCRET_INPUT = 2,
+	MB_COMMAND_READ_HOLD_INPUT    = 3,
+	MB_COMMAND_READ_INPUT         = 4,
+
+	MB_COMMAND_WRITE_SINGLE_COIL  = 5,
+	MB_COMMAND_WRITE_SINGLE_HILD  = 6,
+	MB_COMMAND_WRITE_MUSTI_COILS  = 15,
+	MB_COMMAND_WRITE_MUSTI_HOLDS  = 16,
+
+	MB_COMMAND_AMOUNT
+}mb_command_t;
+
+
+
 typedef enum{
 	MB_STATUS_FREE,
 	MB_STATUS_BUISY
 }modbus_status;
 
+
+
+typedef int8_t (*bus_function)(uint8_t *buf, uint16_t buff_length);
+
+
+
+typedef struct {
+	mb_error_t (*parse_request)(uint8_t *data,
+			                    uint16_t data_length,
+								uint8_t my_dev_id);
+
+	mb_error_t (*send_response)(bus_function send,
+			                    uint8_t      my_dev_id,
+								uint8_t      answer_function,
+								uint8_t      *data,
+			                    uint8_t     data_len);
+}mb_functions_t;
+
+
+
 typedef struct modbus_defenition_t{
+	mb_functions_t functions;
+
 	mb_type_mode_t typemode;
 	mb_work_mode_t workmode;
 
 	modbus_status  status;
 
-    int8_t (*send_buf_function)(uint8_t *send_buf, uint16_t buff_length);        // uart
-    int8_t (*receive_buf_function)(uint8_t *receive_buf, uint16_t *buff_length); // uart
+	bus_function send_buf_function;
+	bus_function receive_buf_function;
 
-	//pointers to the functions
-    mb_error_t (*wsr_function)( uint8_t   slave_addr,
-                                uint8_t   register_name,
-                                uint16_t  data);
-    mb_error_t (*rsr_function)( uint8_t   slave_addr,
-                                uint8_t   register_name,
-                                uint16_t  data);
+
+
+    uint8_t        id;  /*!< This parameter describe id of the device if it slave*/
+
 }modbus_defenition_t;
 
 /**
@@ -72,25 +104,31 @@ typedef struct modbus_defenition_t{
  *                  This parameter should be from the  mb_type_mode_t list.
  * @param mode    - This parameter define role of the device (Master or Slave).
  *                  Value of this parameter should be in the range of the mb_work_mode_t list.
+ * @param id      - Identification number of the device if it slave
+ *
  * @param handler - Pointer to the modbus configuration which will filled by this initialization function
  * @return Result of the operation. If operation was finished with success will return MB_ERR_STATUS_SUCCESS,
  *         else will be return error code from the  mb_error_t list
  */
-mb_error_t Modbus_Init(mb_type_mode_t type,
-		               mb_work_mode_t mode,
+mb_error_t Modbus_Init(mb_type_mode_t      type,
+		               mb_work_mode_t      mode,
+					   uint8_t             id,
+					   bus_function       send_buf_func,
+					   bus_function       reseive_buf_func,
 					   modbus_defenition_t *handler);
+
 
 void       Modbus_OperationDoneClbk(modbus_defenition_t *handler);
 
 
-mb_error_t Modbus_WriteSingleRegister(modbus_defenition_t   *handler,
-		                              uint8_t  slave_addr,
-								      uint8_t  register_name,
-								      uint16_t data);
+mb_error_t Modbus_SendResponse(modbus_defenition_t   *handler,
+							   mb_command_t          command,
+							   uint8_t               *data,
+							   uint8_t               data_len);
 
-mb_error_t Modbus_ReadSingleRegister(modbus_defenition_t  *handler,
-		                             uint8_t  slave_addr,
-								     uint8_t  register_name,
-								     uint16_t *data);
+
+mb_error_t Modbus_ReadQuery(modbus_defenition_t  *handler,
+		                    uint8_t *data,
+							uint16_t data_length);
 
 #endif

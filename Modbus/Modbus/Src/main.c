@@ -36,6 +36,26 @@ static void MX_USART2_UART_Init(void);
   * @brief  The application entry point.
   * @retval int
   */
+
+
+
+int8_t uart_send_buf_function(uint8_t *buf, uint16_t buff_length){
+	HAL_StatusTypeDef st = HAL_UART_Transmit(&huart2, buf, buff_length, 100 );
+
+	return ( st == HAL_OK)?0:1;
+}
+
+int8_t uart_reseive_buf_function(uint8_t *buf, uint16_t buff_length){
+
+	HAL_StatusTypeDef st = HAL_UART_Receive(&huart2, buf, buff_length, 100);
+
+	return ( st == HAL_OK)?0:1;
+}
+
+
+modbus_defenition_t modbus;
+
+
 int main(void)
 {
 
@@ -48,18 +68,18 @@ int main(void)
   MX_USART2_UART_Init();
 
 
-  modbus_defenition_t modbus;
 
-  uint8_t st = Modbus_Init(MB_TYPEMODE_RTU, MB_WORKMODE_MASTER, (&modbus));
 
-  char* buf[50]={0};
-  sprintf(buf, "init status %d \n", st);
-  HAL_UART_Transmit(&huart2, buf, strlen(buf), 100 );
+  uint8_t st = Modbus_Init( MB_TYPEMODE_RTU, MB_WORKMODE_MASTER, 0x11,
+		                    uart_send_buf_function, uart_reseive_buf_function,
+		                    (&modbus));
 
-  st = Modbus_WriteSingleRegister(&modbus, 0x01, 0x2, 300);
-  sprintf(buf, "write status %d \n", st);
-  HAL_UART_Transmit(&huart2, buf, strlen(buf), 100 );
+  //Modbus_SendResponse(&modbus, 11, 55, MB_COMMAND_READ_DISCRET_INPUT, 3);
 
+  uint8_t buf[]  = {0x11, MB_COMMAND_READ_DISCRET_INPUT, 1001, 1, 0x88, 0x2A};
+
+
+  Modbus_ReadQuery(&modbus, buf, sizeof(buf));
 
 
   while (1)
@@ -68,6 +88,22 @@ int main(void)
   }
 
 }
+
+
+
+void ReadDiscretInput(uint16_t first_reg, uint16_t number){
+	// Get necessary data from
+
+    uint8_t response_data[] = {1,2,3,4};
+	Modbus_SendResponse(&modbus, MB_COMMAND_READ_DISCRET_INPUT, response_data, sizeof(response_data) );
+}
+
+
+
+
+
+
+
 
 /**
   * @brief System Clock Configuration

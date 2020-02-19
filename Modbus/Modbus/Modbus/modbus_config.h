@@ -16,10 +16,21 @@
  */
 
 
-#define MODBUS_COMMAND_WRITE_SINGLE_REGISTER     ( 1 )
-#define MODBUS_COMMAND_READ_SINGLE_REGISTER      ( 0 )
-#define MODBUS_COMMAND_WRITE_MULTY_REGISTER      ( 0 )
-#define MODBUS_COMMAND_READ_MULTY_REGISTER       ( 0 )
+#define MODBUS_COMMAND_READ_DISCRET_NPUT_REGISTER       ( 1 )
+
+
+
+
+
+#define REQUEST_BUFF_SIZE     6
+
+
+
+// Callbacks which will be called if function received
+#if MODBUS_COMMAND_READ_DISCRET_NPUT_REGISTER
+	void ReadDiscretInput(uint16_t first_reg, uint16_t number);
+#endif
+
 
 
 #endif
