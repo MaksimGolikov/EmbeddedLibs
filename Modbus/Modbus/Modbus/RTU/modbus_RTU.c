@@ -29,10 +29,16 @@ mb_error_t MBRTU_SendResponse(  bus_function         send,
 
 		switch(answer_function){
 		  default:
+		  case MB_COMMAND_READ_COIL:
 		  case MB_COMMAND_READ_DISCRET_INPUT:
+		  case MB_COMMAND_READ_HOLD_INPUT:
+		  case MB_COMMAND_READ_INPUT:
 			  send_buff[inx] = data_len;
 			break;
+		  case MB_COMMAND_WRITE_SINGLE_COIL:
 		  case MB_COMMAND_WRITE_SINGLE_HILD:
+		  case MB_COMMAND_WRITE_MUSTI_COILS:
+		  case MB_COMMAND_WRITE_MUSTI_HOLDS:
 			  send_buff[inx] = first_reg >> 8;
 			  inx++;
 			  send_buff[inx] = first_reg & 0xFF;

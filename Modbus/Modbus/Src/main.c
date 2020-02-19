@@ -76,8 +76,8 @@ int main(void)
 
   //Modbus_SendResponse(&modbus, 11, 55, MB_COMMAND_READ_DISCRET_INPUT, 3);
 
-  uint8_t buf[]  = {0x11, MB_COMMAND_READ_DISCRET_INPUT, 1001, 1, 0x88, 0x2A};
-  uint8_t buf1[]  = {0x11, MB_COMMAND_WRITE_SINGLE_HILD,  1001, 1, 0x49, 0x6b};
+  uint8_t buf[]  = {0x11, MB_COMMAND_READ_DISCRET_INPUT, 0x03, 0xE9, 0, 1, 0x88, 0x2A};
+  uint8_t buf1[]  = {0x11, MB_COMMAND_WRITE_SINGLE_HILD,  0x03, 0xE9, 0, 1, 0x2a, 0x9b};
 
 
   Modbus_ReadQuery(&modbus, buf, sizeof(buf));
