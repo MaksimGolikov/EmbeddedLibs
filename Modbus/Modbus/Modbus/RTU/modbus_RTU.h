@@ -5,11 +5,12 @@
 #include <stdint.h>
 
 
-mb_error_t MBRTU_SendResponse( bus_function          send,
+mb_error_t MBRTU_SendResponse(  bus_function          send,
 		                        uint8_t               my_dev_id,
+								uint16_t              first_reg,
 								uint8_t               answer_function,
 								uint8_t               *data,
-								uint8_t              data_len);
+								uint8_t               data_len);
 
 mb_error_t MBRTU_ParseRequest(uint8_t *data,
 		                      uint16_t data_length,

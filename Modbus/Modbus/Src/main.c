@@ -77,10 +77,11 @@ int main(void)
   //Modbus_SendResponse(&modbus, 11, 55, MB_COMMAND_READ_DISCRET_INPUT, 3);
 
   uint8_t buf[]  = {0x11, MB_COMMAND_READ_DISCRET_INPUT, 1001, 1, 0x88, 0x2A};
+  uint8_t buf1[]  = {0x11, MB_COMMAND_WRITE_SINGLE_HILD,  1001, 1, 0x49, 0x6b};
 
 
   Modbus_ReadQuery(&modbus, buf, sizeof(buf));
-
+  Modbus_ReadQuery(&modbus, buf1, sizeof(buf1));
 
   while (1)
   {
@@ -91,15 +92,24 @@ int main(void)
 
 
 
-void ReadDiscretInput(uint16_t first_reg, uint16_t number){
+void ReadDiscretInputClbk(uint16_t first_reg, uint16_t number){
 	// Get necessary data from
 
     uint8_t response_data[] = {1,2,3,4};
-	Modbus_SendResponse(&modbus, MB_COMMAND_READ_DISCRET_INPUT, response_data, sizeof(response_data) );
+	Modbus_SendResponse(&modbus, MB_COMMAND_READ_DISCRET_INPUT, response_data, sizeof(response_data), first_reg );
 }
 
 
+void WriteSingleHoldClbk(uint16_t reg, uint16_t value){
+	/*
+	 * Write necessary register by new value.
+	 * If write operation was correct than to the response should be sent the same value
+	 */
 
+
+
+	Modbus_SendResponse(&modbus, MB_COMMAND_WRITE_SINGLE_HILD, value, sizeof(value), reg );
+}
 
 
 

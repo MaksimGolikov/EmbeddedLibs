@@ -58,11 +58,13 @@ void       Modbus_OperationDoneClbk(modbus_defenition_t *handler){
 mb_error_t Modbus_SendResponse(modbus_defenition_t   *handler,
 							   mb_command_t          command,
 							   uint8_t               *data,
-							   uint8_t               data_len){
+							   uint8_t               data_len,
+							   uint16_t              first_reg){
 	mb_error_t result = MB_ERR_STATUS_BUS_BUISY;
 
     return handler->functions.send_response(handler->send_buf_function,
     		                                handler->id,
+											first_reg,
 											(uint8_t)command,
 											data,
 											data_len);

@@ -71,9 +71,10 @@ typedef struct {
 
 	mb_error_t (*send_response)(bus_function send,
 			                    uint8_t      my_dev_id,
+								uint16_t     reg,
 								uint8_t      answer_function,
 								uint8_t      *data,
-			                    uint8_t     data_len);
+			                    uint8_t      data_len);
 }mb_functions_t;
 
 
@@ -124,7 +125,8 @@ void       Modbus_OperationDoneClbk(modbus_defenition_t *handler);
 mb_error_t Modbus_SendResponse(modbus_defenition_t   *handler,
 							   mb_command_t          command,
 							   uint8_t               *data,
-							   uint8_t               data_len);
+							   uint8_t               data_len,
+							   uint16_t              first_reg);
 
 
 mb_error_t Modbus_ReadQuery(modbus_defenition_t  *handler,

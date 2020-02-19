@@ -12,6 +12,7 @@
 
 mb_error_t MBRTU_SendResponse(  bus_function         send,
 		                        uint8_t              my_dev_id,
+								uint16_t             first_reg,
 								uint8_t              answer_function,
 								uint8_t              *data,
 								uint8_t              data_len){
@@ -25,7 +26,20 @@ mb_error_t MBRTU_SendResponse(  bus_function         send,
 	if(send_buff != NULL){
 		send_buff[inx] = my_dev_id;         inx ++;
 		send_buff[inx] = answer_function;   inx ++;
-		send_buff[inx] = data_len;          inx ++;
+
+		switch(answer_function){
+		  default:
+		  case MB_COMMAND_READ_DISCRET_INPUT:
+			  send_buff[inx] = data_len;
+			break;
+		  case MB_COMMAND_WRITE_SINGLE_HILD:
+			  send_buff[inx] = first_reg >> 8;
+			  inx++;
+			  send_buff[inx] = first_reg & 0xFF;
+			  break;
+
+		}
+		inx ++;
 
 		while(data_len--){
 			send_buff[inx] = *data;
@@ -60,15 +74,22 @@ mb_error_t MBRTU_ParseRequest(uint8_t *data, uint16_t data_length, uint8_t my_de
         	if(my_dev_id == RECIEVER_ID(data) ){
 				switch(RECIEVER_FUNCTION(data)){
 
-				  #if MODBUS_COMMAND_READ_DISCRET_NPUT_REGISTER
+				  #if MODBUS_COMMAND_READ_DISCRET_INPUT_REGISTER
 					case MB_COMMAND_READ_DISCRET_INPUT:{
 						uint16_t first_reg = (data[2] << 8) | data[3];
 						uint16_t numb_reg  = (data[4] << 8) | data[5];
 
-						ReadDiscretInput(first_reg, numb_reg);
+						ReadDiscretInputClbk(first_reg, numb_reg);
 					}break;
 				  #endif
+         		  #if MODBUS_COMMAND_WRITE_SINGLE_HOLD_REGISTER
+					case MB_COMMAND_WRITE_SINGLE_HILD:{
+						uint16_t first_reg = (data[2] << 8) | data[3];
+						uint16_t numb_reg  = (data[4] << 8) | data[5];
 
+						WriteSingleHoldClbk(first_reg, numb_reg);
+					}break;
+				  #endif
 
 					default:
 						break;
