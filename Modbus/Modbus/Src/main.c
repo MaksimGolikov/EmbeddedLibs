@@ -66,17 +66,16 @@ int main(void)
 
 
 
-  uint8_t st = Modbus_Init( MB_TYPEMODE_RTU, MB_WORKMODE_MASTER, 0x11,
-		                    uart_send_buf_function, uart_reseive_buf_function,
-		                    (&modbus));
+  Modbus_Init( MB_TYPEMODE_RTU, MB_WORKMODE_MASTER, 0x11,
+	           uart_send_buf_function, uart_reseive_buf_function,
+	           (&modbus));
 
 
-  uint8_t buf[]  = {0x11, MB_COMMAND_READ_DISCRET_INPUT, 0x03, 0xE9, 0, 1, 0xEA, 0x6A};
-  uint8_t buf1[]  = {0x11, MB_COMMAND_WRITE_SINGLE_HILD,  0x03, 0xE9, 0, 1, 0x2a, 0x9b};
+  //uint8_t buf_req[]  = {0x11, MB_COMMAND_READ_DISCRET_INPUT, 0x03, 0xE9, 0, 1, 0xEA, 0x6A};
+  uint8_t buf_answ[]  = {0x11, 0x02,  0x04, 0x01, 0x02, 0x03, 0x04, 0x2c, 0x4b};
 
 
-  //Modbus_ReadQuery(&modbus, buf, sizeof(buf));
-  //Modbus_ReadQuery(&modbus, buf1, sizeof(buf1));
+ // Modbus_ParseQuery(&modbus, buf_req, sizeof(buf_req));
 
 
   Modbus_MasterRequest_ReadDisret(&modbus,
@@ -84,11 +83,13 @@ int main(void)
 								  1001);
 
 
+  Modbus_ParseQuery(&modbus, buf_answ, sizeof(buf_answ));
+
 
 
   while (1)
   {
-
+	  Modbus_MasterRun(&modbus);
   }
 
 }
@@ -113,6 +114,16 @@ void WriteSingleHoldClbk(uint16_t reg, uint16_t value){
 
 	Modbus_SendResponse(&modbus, MB_COMMAND_WRITE_SINGLE_HILD, value, sizeof(value), reg );
 }
+
+
+
+void MasterErrorClbk(uint8_t err_code){
+	uint8_t df =  9;
+}
+void MasterResnonseClbk(uint16_t read){
+	uint8_t df =  9;
+}
+
 
 
 

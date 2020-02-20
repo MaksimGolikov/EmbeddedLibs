@@ -45,4 +45,9 @@
 
 
 
+
+	void MasterErrorClbk(uint8_t err_code);
+	void MasterResnonseClbk(uint16_t data);
+
+
 #endif

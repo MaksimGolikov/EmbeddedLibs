@@ -5,8 +5,11 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#define RECIEVER_ID(data)       (data[0])
-#define RECIEVER_FUNCTION(data) (data[1])
+#define RECIEVER_ID(data)              (data[0])
+#define RECIEVER_FUNCTION(data)        (data[1])
+#define RECEIVER_ERROR_CODE(data)      (data[2])
+#define RECEIVE_NUMBER_BYTES(data)     (data[2])
+#define RECIEVE_FIRST_DATA_BYTE_INX    3
 
 #define SIZE_OF_RESPONSE_BUF(data_len) (data_len + 5) // Addr(1) + func(1)+ Byte num(1) + CRC(2)
 #define SIZE_OF_REQUEST_BUF(data_len) (data_len + 4) // Addr(1) + func(1)+ CRC(2)
@@ -69,7 +72,11 @@ mb_error_t MBRTU_SendResponse(  bus_function         send,
 }
 
 
-mb_error_t MBRTU_ParseRequest(uint8_t *data, uint16_t data_length, uint8_t my_dev_id){
+mb_error_t MBRTU_ParseRequest(uint8_t *data,
+		                     uint16_t data_length,
+							 uint8_t  my_dev_id,
+		                     bool     is_it_master,
+							 uint8_t  last_function){
 
 	mb_error_t result = MB_ERR_STATUS_UNCORRECT_PARAM;
 
@@ -81,28 +88,44 @@ mb_error_t MBRTU_ParseRequest(uint8_t *data, uint16_t data_length, uint8_t my_de
         if(cul_crc == read_crc){
 
         	if(my_dev_id == RECIEVER_ID(data) ){
-				switch(RECIEVER_FUNCTION(data)){
 
-				  #if MODBUS_COMMAND_READ_DISCRET_INPUT_REGISTER
-					case MB_COMMAND_READ_DISCRET_INPUT:{
-						uint16_t first_reg = (data[2] << 8) | data[3];
-						uint16_t numb_reg  = (data[4] << 8) | data[5];
+        		if(is_it_master){
+        			if(RECIEVER_FUNCTION(data) == last_function){
+        				uint16_t count_reg  = RECEIVE_NUMBER_BYTES(data);
 
-						ReadDiscretInputClbk(first_reg, numb_reg);
-					}break;
-				  #endif
-         		  #if MODBUS_COMMAND_WRITE_SINGLE_HOLD_REGISTER
-					case MB_COMMAND_WRITE_SINGLE_HILD:{
-						uint16_t first_reg = (data[2] << 8) | data[3];
-						uint16_t numb_reg  = (data[4] << 8) | data[5];
+        				uint8_t inx = RECIEVE_FIRST_DATA_BYTE_INX;
+        				while(count_reg--){
+        					uint16_t read = (data[inx] << 8) | data[inx++];
+        					MasterResnonseClbk(read);
+        					inx ++;
+        				}
+        			}else{
+        				MasterErrorClbk(RECEIVER_ERROR_CODE(data));
+        			}
+        		}else{
+    				switch(RECIEVER_FUNCTION(data)){
 
-						WriteSingleHoldClbk(first_reg, numb_reg);
-					}break;
-				  #endif
+    				  #if MODBUS_COMMAND_READ_DISCRET_INPUT_REGISTER
+    					case MB_COMMAND_READ_DISCRET_INPUT:{
+    						uint16_t first_reg = (data[2] << 8) | data[3];
+    						uint16_t numb_reg  = (data[4] << 8) | data[5];
 
-					default:
-						break;
-				}
+    						ReadDiscretInputClbk(first_reg, numb_reg);
+    					}break;
+    				  #endif
+             		  #if MODBUS_COMMAND_WRITE_SINGLE_HOLD_REGISTER
+    					case MB_COMMAND_WRITE_SINGLE_HILD:{
+    						uint16_t first_reg = (data[2] << 8) | data[3];
+    						uint16_t numb_reg  = (data[4] << 8) | data[5];
+
+    						WriteSingleHoldClbk(first_reg, numb_reg);
+    					}break;
+    				  #endif
+
+    					default:
+    						break;
+    				}
+        		}
         	}
         }
 	}

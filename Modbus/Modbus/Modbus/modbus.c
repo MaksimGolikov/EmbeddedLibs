@@ -59,9 +59,7 @@ mb_error_t Modbus_Init(mb_type_mode_t      type,
 	return result;
 }
 
-void       Modbus_OperationDoneClbk(modbus_defenition_t *handler){
-	handler->status   = MB_STATUS_FREE;
-}
+
 
 mb_error_t Modbus_SendResponse(modbus_defenition_t   *handler,
 							   mb_command_t          command,
@@ -80,9 +78,15 @@ mb_error_t Modbus_SendResponse(modbus_defenition_t   *handler,
 	return result;
 }
 
-mb_error_t Modbus_ReadQuery(modbus_defenition_t  *handler, uint8_t *data, uint16_t data_length){
+mb_error_t Modbus_ParseQuery(modbus_defenition_t  *handler, uint8_t *data, uint16_t data_length){
 
-	return handler->functions.parse_request(data, data_length, handler->id);
+	if(handler->workmode == MB_WORKMODE_MASTER){
+		handler->master_mode = MB_MASTER_IDLE;
+		handler->status      = MB_STATUS_FREE;
+	}
+
+	return handler->functions.parse_request(data, data_length, handler->id,
+			                                handler->workmode, handler->last_funct);
 }
 
 
@@ -114,7 +118,11 @@ mb_error_t Modbus_MasterRequest_ReadDisret(modbus_defenition_t  *handler,
 												  data,
 												  sizeof(data) );
 		 if(status == MB_ERR_STATUS_SUCCESS){
-			 handler->status = MB_STATUS_BUISY;
+			 handler->status     = MB_STATUS_BUISY;
+
+			 handler->last_funct = MB_COMMAND_READ_DISCRET_INPUT;
+             handler->id         = slave_id;
+
 			 handler->request_send_time = GET_CURRENT_TIME;
 		 }
 	}
@@ -136,8 +144,7 @@ void Modbus_MasterRun(modbus_defenition_t  *handler){
 			case MB_MASTER_WAITING_RESPONSE:{
 				if( IS_TIME_SPENT(handler->request_send_time, handler->response_timeout) ){
 					handler->master_mode = MB_MASTER_IDLE;
-				}else{
-
+					handler->status      = MB_STATUS_FREE;
 				}
 			}break;
 			default:

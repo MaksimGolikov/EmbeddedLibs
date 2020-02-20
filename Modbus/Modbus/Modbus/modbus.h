@@ -2,6 +2,7 @@
 #define MODBUS_COMMON_FILE_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /**
  * @brief List of possible error code of modbus utility
@@ -30,8 +31,8 @@ typedef enum{
  * @brief List of possible work mode of the modbus utility
  */
 typedef enum{
-	MB_WORKMODE_MASTER,
 	MB_WORKMODE_SLAVE,
+	MB_WORKMODE_MASTER,
 
 	MB_WORKMDODE_AMOUNT
 }mb_work_mode_t;
@@ -67,7 +68,9 @@ typedef int8_t (*bus_function)(uint8_t *buf, uint16_t buff_length);
 typedef struct {
 	mb_error_t (*parse_request)(uint8_t *data,
 			                    uint16_t data_length,
-								uint8_t my_dev_id);
+								uint8_t  my_dev_id,
+								bool     is_it_master,
+								uint8_t  last_funct);
 
 	mb_error_t (*send_response)(bus_function send,
 			                    uint8_t      my_dev_id,
@@ -103,8 +106,8 @@ typedef struct modbus_defenition_t{
     uint16_t       response_timeout;    /*!< Period of time which master will wait for a response from a slave*/
     uint32_t       request_send_time;   /*!< The time when the frame was sent*/
 
-    uint8_t        id;  /*!< This parameter describe id of the device if it slave*/
-
+    uint8_t        id;                  /*!< This parameter describe id of the device if it slave*/
+    uint8_t        last_funct;
 }modbus_defenition_t;
 
 /**
@@ -130,7 +133,9 @@ mb_error_t Modbus_Init(mb_type_mode_t      type,
 					   modbus_defenition_t *handler);
 
 
-void       Modbus_OperationDoneClbk(modbus_defenition_t *handler);
+void       Modbus_OperationDoneClbk(modbus_defenition_t *handler,
+		                            uint8_t *data,
+									uint16_t len);
 
 
 mb_error_t Modbus_SendResponse(modbus_defenition_t   *handler,
@@ -140,8 +145,8 @@ mb_error_t Modbus_SendResponse(modbus_defenition_t   *handler,
 							   uint16_t              first_reg);
 
 
-mb_error_t Modbus_ReadQuery(modbus_defenition_t  *handler,
-		                    uint8_t *data,
-							uint16_t data_length);
+mb_error_t Modbus_ParseQuery(modbus_defenition_t  *handler,
+		                     uint8_t *data,
+							 uint16_t data_length);
 
 #endif
