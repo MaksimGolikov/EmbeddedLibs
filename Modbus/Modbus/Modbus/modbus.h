@@ -75,6 +75,15 @@ typedef struct {
 								uint8_t      answer_function,
 								uint8_t      *data,
 			                    uint8_t      data_len);
+
+
+	mb_error_t (*send_request)(  bus_function         send,
+			                     uint8_t              my_dev_id,
+							     uint8_t              function,
+								 uint8_t              *data,
+								 uint8_t              data_len);
+
+
 }mb_functions_t;
 
 
@@ -87,10 +96,12 @@ typedef struct modbus_defenition_t{
 
 	modbus_status  status;
 
-	bus_function send_buf_function;
-	bus_function receive_buf_function;
+	bus_function   send_buf_function;
+	bus_function   receive_buf_function;
 
-
+    uint8_t        master_mode;         /*!<This parameter describes the current mode of Modbus if the device is a master on a bus */
+    uint16_t       response_timeout;    /*!< Period of time which master will wait for a response from a slave*/
+    uint32_t       request_send_time;   /*!< The time when the frame was sent*/
 
     uint8_t        id;  /*!< This parameter describe id of the device if it slave*/
 

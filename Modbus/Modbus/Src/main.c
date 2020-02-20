@@ -28,14 +28,11 @@
 UART_HandleTypeDef huart2;
 
 
+
+
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
 
 
 
@@ -61,7 +58,6 @@ int main(void)
 
   HAL_Init();
 
-
   SystemClock_Config();
 
   MX_GPIO_Init();
@@ -74,14 +70,21 @@ int main(void)
 		                    uart_send_buf_function, uart_reseive_buf_function,
 		                    (&modbus));
 
-  //Modbus_SendResponse(&modbus, 11, 55, MB_COMMAND_READ_DISCRET_INPUT, 3);
 
-  uint8_t buf[]  = {0x11, MB_COMMAND_READ_DISCRET_INPUT, 0x03, 0xE9, 0, 1, 0x88, 0x2A};
+  uint8_t buf[]  = {0x11, MB_COMMAND_READ_DISCRET_INPUT, 0x03, 0xE9, 0, 1, 0xEA, 0x6A};
   uint8_t buf1[]  = {0x11, MB_COMMAND_WRITE_SINGLE_HILD,  0x03, 0xE9, 0, 1, 0x2a, 0x9b};
 
 
-  Modbus_ReadQuery(&modbus, buf, sizeof(buf));
-  Modbus_ReadQuery(&modbus, buf1, sizeof(buf1));
+  //Modbus_ReadQuery(&modbus, buf, sizeof(buf));
+  //Modbus_ReadQuery(&modbus, buf1, sizeof(buf1));
+
+
+  Modbus_MasterRequest_ReadDisret(&modbus,
+		                          0x11,
+								  1001);
+
+
+
 
   while (1)
   {

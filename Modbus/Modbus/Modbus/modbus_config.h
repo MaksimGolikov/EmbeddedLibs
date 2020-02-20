@@ -8,6 +8,16 @@
 #ifndef MODBUS_COMMON_CONFIG_H
 #define MODBUS_COMMON_CONFIG_H
 
+#include <stdint.h>
+
+//Include of library for with definition of the get time function
+#include "stm32f4xx_hal.h"
+
+#define GET_CURRENT_TIME             HAL_GetTick()
+#define IS_TIME_SPENT(start, pause)  ( ( (start + pause) > GET_CURRENT_TIME )?0:1 )
+
+
+
 
 /**
  * @brief List of commands which this modbus realization supported.
