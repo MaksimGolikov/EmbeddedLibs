@@ -9,7 +9,7 @@
 
 typedef enum{
 	MB_MASTER_IDLE,
-	MB_MASTER_WAITING_RESPONSE,
+	MB_MASTER_WAITING_FOR_A_RESPONSE,
 }mb_master_mode_t;
 
 
@@ -35,7 +35,7 @@ mb_error_t Modbus_Init(mb_type_mode_t      type,
 
 
     (*handler).master_mode          = MB_MASTER_IDLE;
-    (*handler).response_timeout     = 1000; //1 s in ms
+    (*handler).response_timeout     = 500; //1 s in ms
 
 
 	switch(type){
@@ -80,9 +80,15 @@ mb_error_t Modbus_SendResponse(modbus_defenition_t   *handler,
 
 mb_error_t Modbus_ParseQuery(modbus_defenition_t  *handler, uint8_t *data, uint16_t data_length){
 
+
 	if(handler->workmode == MB_WORKMODE_MASTER){
-		handler->master_mode = MB_MASTER_IDLE;
-		handler->status      = MB_STATUS_FREE;
+	    if(handler->master_mode == MB_MASTER_WAITING_FOR_A_RESPONSE){
+	        handler->master_mode = MB_MASTER_IDLE;
+	        handler->status      = MB_STATUS_FREE;
+	    }else{
+	        printf("Exit by unknown \n");
+	        return MB_ERR_STATUS_UNKHOWN_PACKAGE;
+	    }
 	}
 
 	return handler->functions.parse_request(data, data_length, handler->id,
@@ -118,11 +124,12 @@ mb_error_t Modbus_MasterRequest_ReadDisret(modbus_defenition_t  *handler,
 												  data,
 												  sizeof(data) );
 		 if(status == MB_ERR_STATUS_SUCCESS){
-			 handler->status     = MB_STATUS_BUISY;
+			 handler->status            = MB_STATUS_BUISY;
 
-			 handler->last_funct = MB_COMMAND_READ_DISCRET_INPUT;
-             handler->id         = slave_id;
+			 handler->last_funct        = MB_COMMAND_READ_DISCRET_INPUT;
+             handler->id                = slave_id;
 
+             handler->master_mode       = MB_MASTER_WAITING_FOR_A_RESPONSE;
 			 handler->request_send_time = GET_CURRENT_TIME;
 		 }
 	}
@@ -141,7 +148,7 @@ void Modbus_MasterRun(modbus_defenition_t  *handler){
 			case MB_MASTER_IDLE:{
 
 			}break;
-			case MB_MASTER_WAITING_RESPONSE:{
+			case MB_MASTER_WAITING_FOR_A_RESPONSE:{
 				if( IS_TIME_SPENT(handler->request_send_time, handler->response_timeout) ){
 					handler->master_mode = MB_MASTER_IDLE;
 					handler->status      = MB_STATUS_FREE;

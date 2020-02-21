@@ -1,3 +1,11 @@
+/*
+ * Name        modbus_RTU.h
+ * Author      Maksim Holikov (golikov.mo@gmail.com)
+ * Created on: Feb 17, 2020
+ * Description Header file with definitions of the Modbus RTU functions
+ */
+
+
 #ifndef MODBUS_RTU_H
 #define MODBUS_RTU_H
 
@@ -36,7 +44,7 @@ mb_error_t MBRTU_SendResponse(  bus_function          send,
  * @param my_dev_id    - Id of the device (is it slave)
  * @param is_it_master - Show is master receive this message or slave.
  *                       Callback which will call in success depends on this parameter.
- *@param last funct    - This parameters need to check is it errore core. Use only at master mode (is_it_master == true)
+ *@param last_funct    - This parameters need to check is it error core. Use only at master mode (is_it_master == true)
  *
  * @return Will return MB_ERR_STATUS_SUCCESS if data was sent else return error code
  */

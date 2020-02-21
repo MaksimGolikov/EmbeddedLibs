@@ -1,3 +1,10 @@
+/*
+ * Name        modbus_RTU.c
+ * Author      Maksim Holikov (golikov.mo@gmail.com)
+ * Created on: Feb 17, 2020
+ * Description Source file with definitions of the Modbus RTU functions
+ */
+
 #include "modbus_RTU.h"
 #include "../modbus_CRC16.h"
 #include "../modbus_config.h"
@@ -86,10 +93,10 @@ mb_error_t MBRTU_ParseRequest(uint8_t *data,
         result            = MB_ERR_STATUS_CRC_FAIL;
 
         if(cul_crc == read_crc){
-
         	if(my_dev_id == RECIEVER_ID(data) ){
-
         		if(is_it_master){
+                    #if MODBUS_ROLE_MASTER
+
         			if(RECIEVER_FUNCTION(data) == last_function){
         				uint16_t count_reg  = RECEIVE_NUMBER_BYTES(data);
 
@@ -102,6 +109,8 @@ mb_error_t MBRTU_ParseRequest(uint8_t *data,
         			}else{
         				MasterErrorClbk(RECEIVER_ERROR_CODE(data));
         			}
+
+                    #endif
         		}else{
     				switch(RECIEVER_FUNCTION(data)){
 
