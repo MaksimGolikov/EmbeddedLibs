@@ -57,7 +57,7 @@
  * @brief This definition declare state of Read discrete input function.
  *        Code of this function 0x02
  */
-#define MODBUS_COMMAND_READ_DISCRET_INPUT_REGISTER       ( 0 )
+#define MODBUS_COMMAND_READ_DISCRETE_INPUT_REGISTER       ( 0 )
 
 /**
  * @brief This definition declare state of Read hold input function.
@@ -118,7 +118,7 @@
     /**
      * @brief Callbacks which will be called if function received
      */
-    #if MODBUS_COMMAND_READ_DISCRET_INPUT_REGISTER
+    #if MODBUS_COMMAND_READ_DISCRETE_INPUT_REGISTER
         /**
          * @brief API of the callback function which will call on slave side
          * @param fisrt_reg  - The offset of the target register
@@ -160,10 +160,11 @@
     #if MODBUS_COMMAND_WRITE_MULTI_ANALOG_REGISTER
         /**
         * @brief API of the callback function which will call on slave side
-        * @param reg    - The offset of the target register
-        * @param value  - The value to have write
+        * @param reg       - The offset of the target register
+        * @param quantity  - The number of register to write
+        * @param values    - The pointer to the memory which contains the values to write
         */
-        void modbus_WriteSingleAnalog_cb(uint16_t reg, uint16_t value);
+        void modbus_WriteMultiAnalog_cb(uint16_t reg, uint16_t quantity, uint16_t *values);
     #endif
 
 

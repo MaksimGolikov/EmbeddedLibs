@@ -12,11 +12,17 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#define RECEIVER_ID(data)              (data[0])
-#define RECEIVER_FUNCTION(data)        (data[1])
-#define RECEIVER_ERROR_CODE(data)      (data[2])
-#define RECEIVER_NUMBER_BYTES(data)    (data[2])
-#define RECEIVER_FIRST_DATA_BYTE_INX   3
+#define RECEIVER_ID(data)                          (data[0])
+#define RECEIVER_FUNCTION(data)                    (data[1])
+#define RECEIVER_ERROR_CODE(data)                  (data[2])
+#define RECEIVER_NUMBER_BYTES(data)                (data[2])
+#define RECEIVER_NUMBER_DATA_BYTE_MULTI(data)      (data[6])
+
+
+#define RECEIVER_FIRST_DATA_BYTE_INX               3
+#define RECEIVER_FIRST_VAL_TO_WRITE_MULTI          7
+
+
 
 #define SIZE_OF_RESPONSE_BUF(data_len) (data_len + 5) // Addr(1) + func(1)+ Byte num(1) + CRC(2)
 #define SIZE_OF_REQUEST_BUF(data_len) (data_len + 4) // Addr(1) + func(1)+ CRC(2)
@@ -129,22 +135,57 @@ mb_error_t MBRTU_ParseFrame (uint8_t *data,
 
                     #endif
                 }else{
+                    uint16_t offset_reg = (data[2] << 8) | data[3];
+                    uint16_t numb_reg  = (data[4] << 8) | data[5];
+
                     switch(RECEIVER_FUNCTION(data)){
 
-                      #if MODBUS_COMMAND_READ_DISCRET_INPUT_REGISTER
+                      #if MODBUS_COMMAND_READ_DISCRETE_INPUT_REGISTER
                         case MB_COMMAND_READ_DISCRETE_INPUT:{
-                            uint16_t first_reg = (data[2] << 8) | data[3];
-                            uint16_t numb_reg  = (data[4] << 8) | data[5];
-
-                            modbus_ReadDiscretInput_cb(first_reg, numb_reg);
+                            modbus_ReadDiscretInput_cb(offset_reg, numb_reg);
+                            result = MB_ERR_STATUS_SUCCESS;
                         }break;
                       #endif
-                       #if MODBUS_COMMAND_WRITE_SINGLE_HOLD_REGISTER
-                        case MB_COMMAND_WRITE_SINGLE_ANALOG:{
-                            uint16_t first_reg = (data[2] << 8) | data[3];
-                            uint16_t numb_reg  = (data[4] << 8) | data[5];
+                      #if MODBUS_COMMAND_READ_HOLD_INPUT_REGISTER
+                        case MB_COMMAND_READ_HOLD_INPUT:{
+                            modbus_ReadHold_cb(offset_reg, numb_reg);
+                            result = MB_ERR_STATUS_SUCCESS;
+                        }break;
+                      #endif
+                      #if MODBUS_COMMAND_READ_ANALOG_INPUT_REGISTER
+                        case MB_COMMAND_READ_ANALOG_INPUT:{
+                            modbus_ReadAnalog_cb(offset_reg, numb_reg);
+                            result = MB_ERR_STATUS_SUCCESS;
+                        }break;
+                      #endif
 
-                            WriteSingleHoldClbk(first_reg, numb_reg);
+                      #if MODBUS_COMMAND_WRITE_SINGLE_ANALOG_REGISTER
+                        case MB_COMMAND_WRITE_SINGLE_ANALOG:{
+                            modbus_WriteSingleAnalog_cb(offset_reg, numb_reg);
+                            result = MB_ERR_STATUS_SUCCESS;
+                        }break;
+                      #endif
+
+                      #if MODBUS_COMMAND_WRITE_MULTI_ANALOG_REGISTER
+                        case MB_COMMAND_WRITE_MULTI_ANALOG:{
+                            uint8_t count_values_to_write = RECEIVER_NUMBER_DATA_BYTE_MULTI(data) >> 1; // devived on 2
+
+                            result                     = MB_ERR_STATUS_FAIL_MEM_ALLOCATED;
+                            uint8_t inx                = RECEIVER_FIRST_VAL_TO_WRITE_MULTI;
+
+                            uint16_t *values_for_write = (uint16_t*)malloc(count_values_to_write);
+
+                            if(values_for_write != NULL){
+                                result = MB_ERR_STATUS_SUCCESS;
+
+                                for(uint8_t i = 0; i < count_values_to_write; i++){
+                                    values_for_write[i]  = (data[inx] << 8); inx++;
+                                    values_for_write[i] |= data[inx];        inx++;
+                                }
+                                modbus_WriteMultiAnalog_cb(offset_reg, numb_reg, values_for_write);
+                            }
+
+                            free(values_for_write);
                         }break;
                       #endif
 

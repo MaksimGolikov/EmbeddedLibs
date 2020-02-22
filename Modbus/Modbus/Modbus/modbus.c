@@ -324,6 +324,8 @@ mb_error_t modbus_MasterRequest_WriteMultiAnalogRegister(modbus_definition_t  *h
                                                       MB_COMMAND_WRITE_MULTI_ANALOG,
                                                       data,
                                                       data_size );
+             free(data);
+
              if(status == MB_ERR_STATUS_SUCCESS){
                  handler->status            = MB_STATUS_BUISY;
 
