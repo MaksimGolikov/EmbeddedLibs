@@ -11,22 +11,25 @@
 #include <stdint.h>
 
 //Include of library for with definition of the get time function
-#include 
+#include <sal/jsom_sal.h>
 
 
 
 /**
  * @brief Definition of the function to get the current time of the platform
  */
-#define GET_CURRENT_TIME             some_func()
+#define GET_CURRENT_TIME             jsom_getms()
 
 /**
  * @brief Definition to check is the period of time spent
  */
 #define IS_TIME_SPENT(start, pause)  ( ( (start + pause) > GET_CURRENT_TIME )?0:1 )
 
-
-
+/**
+ *@brief - Definition of the period of time to understand that frame is received completely
+ *         This value should be in ms
+ */
+#define FRAME_TIMEOUT      10
 
 
 /**
@@ -48,16 +51,50 @@
 #define MODBUS_ROLE_MASTER                               ( 1 )
 
 
-/**
- * @brief This definition declare state of Read discrete input function. Code of this function 0x02
- */
-#define MODBUS_COMMAND_READ_DISCRET_INPUT_REGISTER       ( 1 ) // Function 0x02
 
 
 /**
- * @brief This definition declare state of Write hold register function. Code of this function 0x06
+ * @brief This definition declare state of Read discrete input function.
+ *        Code of this function 0x02
  */
-#define MODBUS_COMMAND_WRITE_SINGLE_HOLD_REGISTER        ( 0 ) // Function 0x06
+#define MODBUS_COMMAND_READ_DISCRET_INPUT_REGISTER       ( 0 )
+
+/**
+ * @brief This definition declare state of Read hold input function.
+ *        Code of this function 0x03
+ */
+#define MODBUS_COMMAND_READ_HOLD_INPUT_REGISTER           ( 0 )
+
+/**
+ * @brief This definition declare state of Read hold input function.
+ *        Code of this function 0x04
+ */
+#define MODBUS_COMMAND_READ_ANALOG_INPUT_REGISTER         ( 0 )
+
+
+
+
+
+/**
+ * @brief This definition declare state of Write hold register function.
+ *        Code of this function 0x06
+ */
+#define MODBUS_COMMAND_WRITE_SINGLE_ANALOG_REGISTER        ( 0 )
+
+
+/**
+ * @brief This definition declare state of Write few analog registers function.
+ *        Code of this function 0x10
+ */
+#define MODBUS_COMMAND_WRITE_MULTI_ANALOG_REGISTER        ( 0 )
+
+
+
+
+
+
+
+
 
 
 
@@ -70,25 +107,66 @@
      *
      * @param err_code - The error code to have received from a slave
      */
-	void MasterErrorClbk(uint8_t err_code);
+    void modbus_MasterError_cb(uint8_t err_code);
 
-	/**
-	 * @brief  API of the callback function, which will call on the master if read function was
-	 * @param data - Value which was sent by slave. If slave has sent a few values, callback will call for each value
-	 */
-	void MasterResnonseClbk(uint16_t data);
+    /**
+     * @brief  API of the callback function, which will call on the master if read function was
+     * @param data - Value which was sent by slave. If slave has sent a few values, callback will call for each value
+     */
+    void modbus_MasterResnonse_cb(uint16_t data);
 #else
-	/**
-	 * @brief Callbacks which will be called if function received
-	 */
-	#if MODBUS_COMMAND_READ_DISCRET_INPUT_REGISTER
-	    void ReadDiscretInputClbk(uint16_t first_reg, uint16_t number);
-	#endif
+    /**
+     * @brief Callbacks which will be called if function received
+     */
+    #if MODBUS_COMMAND_READ_DISCRET_INPUT_REGISTER
+        /**
+         * @brief API of the callback function which will call on slave side
+         * @param fisrt_reg  - The offset of the target register
+         * @param number     - The  quantity of the register to have read
+         */
+        void modbus_ReadDiscretInput_cb(uint16_t first_reg, uint16_t number);
+    #endif
+
+    #if MODBUS_COMMAND_READ_HOLD_INPUT_REGISTER
+        /**
+         * @brief API of the callback function which will call on slave side
+         * @param fisrt_reg  - The offset of the target register
+         * @param number     - The  quantity of the register to have read
+         */
+       void modbus_ReadHold_cb(uint16_t first_reg, uint16_t number);
+    #endif
+
+    #if MODBUS_COMMAND_READ_ANALOG_INPUT_REGISTER
+       /**
+        * @brief API of the callback function which will call on slave side
+        * @param fisrt_reg  - The offset of the target register
+        * @param number     - The  quantity of the register to have read
+        */
+       void modbus_ReadAnalog_cb(uint16_t first_reg, uint16_t number);
+    #endif
 
 
-	#if MODBUS_COMMAND_WRITE_SINGLE_HOLD_REGISTER
-	    void WriteSingleHoldClbk(uint16_t reg, uint16_t value);
-	#endif
+
+
+    #if MODBUS_COMMAND_WRITE_SINGLE_ANALOG_REGISTER
+       /**
+        * @brief API of the callback function which will call on slave side
+        * @param reg    - The offset of the target register
+        * @param value  - The value to have write
+        */
+        void modbus_WriteSingleAnalog_cb(uint16_t reg, uint16_t value);
+    #endif
+
+    #if MODBUS_COMMAND_WRITE_MULTI_ANALOG_REGISTER
+        /**
+        * @brief API of the callback function which will call on slave side
+        * @param reg    - The offset of the target register
+        * @param value  - The value to have write
+        */
+        void modbus_WriteSingleAnalog_cb(uint16_t reg, uint16_t value);
+    #endif
+
+
 
 #endif
 

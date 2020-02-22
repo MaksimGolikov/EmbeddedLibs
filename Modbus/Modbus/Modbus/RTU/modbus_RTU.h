@@ -27,11 +27,11 @@
  * @return  Will return MB_ERR_STATUS_SUCCESS if data was sent else return error code
  */
 mb_error_t MBRTU_SendResponse(  bus_function          send,
-		                        uint8_t               my_dev_id,
-								uint16_t              first_reg,
-								uint8_t               answer_function,
-								uint8_t               *data,
-								uint8_t               data_len);
+                                uint8_t               my_dev_id,
+                                uint16_t              first_reg,
+                                uint8_t               answer_function,
+                                uint8_t               *data,
+                                uint8_t               data_len);
 
 /**
  * @brief API of function to parse received data
@@ -48,11 +48,11 @@ mb_error_t MBRTU_SendResponse(  bus_function          send,
  *
  * @return Will return MB_ERR_STATUS_SUCCESS if data was sent else return error code
  */
-mb_error_t MBRTU_ParseRequest(uint8_t *data,
-		                      uint16_t data_length,
-							  uint8_t  my_dev_id,
-							  bool     is_it_master,
-							  uint8_t  last_funct);
+mb_error_t MBRTU_ParseFrame(  uint8_t *data,
+                              uint16_t data_length,
+                              uint8_t  my_dev_id,
+                              bool     is_it_master,
+                              uint8_t  last_funct);
 
 
 /**
@@ -68,9 +68,9 @@ mb_error_t MBRTU_ParseRequest(uint8_t *data,
  * @return Will return MB_ERR_STATUS_SUCCESS if data was sent else return error code
  */
 mb_error_t MBRTU_SendRequest(  bus_function         send,
-		                       uint8_t              my_dev_id,
-							   uint8_t              function,
-							   uint8_t              *data,
-							   uint8_t              data_len);
+                               uint8_t              my_dev_id,
+                               uint8_t              function,
+                               uint8_t              *data,
+                               uint8_t              data_len);
 
 #endif

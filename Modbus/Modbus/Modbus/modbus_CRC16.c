@@ -11,15 +11,15 @@
 
 uint16_t GetCRC16(uint8_t* buf, uint16_t buflen)
 {
-	uint8_t         culc_crc_hi = 0xFF;
-	uint8_t         culc_crc_lo = 0xFF;
-	int32_t         inx         = 0;
+    uint8_t         culc_crc_hi = 0xFF;
+    uint8_t         culc_crc_lo = 0xFF;
+    int32_t         inx         = 0;
 
-	while( buflen-- )
-	{
-		inx = culc_crc_lo ^ *( buf++ );
-		culc_crc_lo = ( uint8_t )( culc_crc_hi ^ crc_part_Hi[inx] );
-		culc_crc_hi = crc_part_Lo[inx];
-	}
-	return ( uint16_t )( culc_crc_hi << 8 | culc_crc_lo );
+    while( buflen-- )
+    {
+        inx = culc_crc_lo ^ *( buf++ );
+        culc_crc_lo = ( uint8_t )( culc_crc_hi ^ crc_part_Hi[inx] );
+        culc_crc_hi = crc_part_Lo[inx];
+    }
+    return ( uint16_t )( culc_crc_hi << 8 | culc_crc_lo );
 }
