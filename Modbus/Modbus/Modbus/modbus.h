@@ -17,6 +17,20 @@
  */
 typedef enum{
     MB_ERR_STATUS_SUCCESS,           /**< Ok */
+
+	/**
+	 * Modbus protocol error
+	 */
+	MB_ERR_FUNCTION_NOT_SUPPORTED = 0x01,
+	MB_ERR_UNCORRECT_OFFSET       = 0x02,
+	MB_ERR_UNCORRECT_VALUE        = 0x03,
+	MB_ERR_UNKNOWN_ERROR          = 0x04,
+	MB_ERR_LONG_OPERATION         = 0x05,
+	MB_ERR_SLAVE_BUSY             = 0x06,
+	MB_ERR_SLAVE_OR_ANSWER_ABSENT = 0x11,
+
+
+
     MB_ERR_STATUS_UNCORRECT_PARAM,   /**< Input parameters not as expected*/
     MB_ERR_STATUS_BUS_BUISY,
 
@@ -34,8 +48,8 @@ typedef enum{
  */
 typedef enum{
     MB_TYPEMODE_RTU,
-    MB_TYPEMODE_TCP,
-    MB_TYPEMODE_ASCII
+    MB_TYPEMODE_ASCII,
+	MB_TYPEMODE_TCP
 
 }mb_type_mode_t;
 

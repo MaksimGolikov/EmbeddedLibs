@@ -85,6 +85,15 @@ mb_error_t MBRTU_SendResponse(  bus_function         send,
 }
 
 
+
+static void MBRTU_SendErrorCode(uint8_t err_code, uint8_t *data, uint16_t size){
+	for(uint8_t i = 0; i < size; i++){
+		data[i] |= 0x80;
+	}
+	send(data, size);
+}
+
+
 mb_error_t MBRTU_ParseFrame (uint8_t *data,
                              uint16_t data_length,
                              uint8_t  my_dev_id,
@@ -107,7 +116,9 @@ mb_error_t MBRTU_ParseFrame (uint8_t *data,
                         uint16_t count_reg  = RECEIVER_NUMBER_BYTES(data);
 
                         uint8_t inx = RECEIVER_FIRST_DATA_BYTE_INX;
-                        while(count_reg--){
+                        uint16_t read_length = 0;
+                        while(count_reg){
+
                             uint16_t read = 0;
                             switch(RECEIVER_FUNCTION(data)){
                                 case MB_COMMAND_READ_HOLD_INPUT:
@@ -125,12 +136,14 @@ mb_error_t MBRTU_ParseFrame (uint8_t *data,
                                 default:
                                     break;
                             }
+                            count_reg --;
+                            read_length++;
 
-                            modbus_MasterResnonse_cb(read);
+                            modbus_MasterResnonse_cb(read,read_length, count_reg, ((count_reg == 0)?1:0) );
                             inx ++;
                         }
                     }else{
-                        modbus_MasterError_cb(RECEIVER_ERROR_CODE(data));
+                    	modbus_MasterError_cb(RECEIVER_ERROR_CODE(data));
                     }
 
                     #endif

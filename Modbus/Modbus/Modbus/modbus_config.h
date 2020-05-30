@@ -11,25 +11,44 @@
 #include <stdint.h>
 
 //Include of library for with definition of the get time function
-#include <sal/jsom_sal.h>
+#include "stm32f4xx_hal.h"
 
 
 
 /**
  * @brief Definition of the function to get the current time of the platform
  */
-#define GET_CURRENT_TIME             jsom_getms()
+#define MODBUS_GET_CURRENT_TIME             HAL_GetTick()
 
 /**
  * @brief Definition to check is the period of time spent
  */
-#define IS_TIME_SPENT(start, pause)  ( ( (start + pause) > GET_CURRENT_TIME )?0:1 )
+#define MODBUS_IS_TIME_SPENT(start, pause)  ( ( (start + pause) > MODBUS_GET_CURRENT_TIME )?0:1 )
 
 /**
- *@brief - Definition of the period of time to understand that frame is received completely
+ *@brief - Definition of the period of time to understand that frame is received completely (only for RTU)
  *         This value should be in ms
  */
-#define FRAME_TIMEOUT      10
+#define MODBUS_FRAME_TIMEOUT      10
+
+/**
+ * @brief The definition the sequence of the end of the frame for the ASCII frame mode
+ */
+#define MODBUS_END_FRAME_ASCII    "\n\r"
+
+
+
+/**
+ * @brief - Definition of the period of time of the master waiting for a response timeout (in ms);
+ *          After this time has elapsed the Modbus error callback will be called with timeout error code
+ * @param err_code
+ */
+#define MODBUS_RESPONSE_TIMEOUT   500
+
+
+
+
+
 
 
 /**
@@ -41,10 +60,6 @@
  */
 
 
-
-
-
-
 /**
  * @brief This definition allows compiling functions of the master
  */
@@ -52,7 +67,10 @@
 
 
 
-
+/**
+ *@brief List of the definitions to enable/disable commands for a slave
+ */
+#if MODBUS_ROLE_MASTER == 0
 /**
  * @brief This definition declare state of Read discrete input function.
  *        Code of this function 0x02
@@ -88,7 +106,7 @@
  */
 #define MODBUS_COMMAND_WRITE_MULTI_ANALOG_REGISTER        ( 0 )
 
-
+#endif
 
 
 
@@ -113,7 +131,7 @@
      * @brief  API of the callback function, which will call on the master if read function was
      * @param data - Value which was sent by slave. If slave has sent a few values, callback will call for each value
      */
-    void modbus_MasterResnonse_cb(uint16_t data);
+    void modbus_MasterResnonse_cb(uint16_t data, uint16_t bite_inx, uint16_t total_length, bool the_end);
 #else
     /**
      * @brief Callbacks which will be called if function received

@@ -20,21 +20,30 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
 #include "modbus.h"
 
-#include <stdio.h>
-#include <stddef.h>
 UART_HandleTypeDef huart2;
 
 
 
-
+/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
 
+static uint8_t received_frame [100] = {0};
+static uint8_t receive_cntr         = 0;
+static uint32_t time_last_receive   = 0;
+
+
+void UART_RX_Callback(){
+
+	receive_cntr++;
+	time_last_receive = HAL_GetTick();
+
+	HAL_UART_Receive(&huart2, &received_frame[receive_cntr], 100, 100);
+}
 
 int8_t uart_send_buf_function(uint8_t *buf, uint16_t buff_length){
 	HAL_StatusTypeDef st = HAL_UART_Transmit(&huart2, buf, buff_length, 100 );
@@ -42,87 +51,118 @@ int8_t uart_send_buf_function(uint8_t *buf, uint16_t buff_length){
 	return ( st == HAL_OK)?0:1;
 }
 
-int8_t uart_reseive_buf_function(uint8_t *buf, uint16_t buff_length){
-
-	HAL_StatusTypeDef st = HAL_UART_Receive(&huart2, buf, buff_length, 100);
-
-	return ( st == HAL_OK)?0:1;
-}
-
-
-modbus_defenition_t modbus;
+modbus_definition_t modbus;
 
 
 int main(void)
 {
+  /* USER CODE BEGIN 1 */
 
+  /* USER CODE END 1 */
+  
+
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
   SystemClock_Config();
 
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  /* USER CODE BEGIN 2 */
+
+ // HAL_UART_Receive_IT(&huart2, &received_frame[receive_cntr], 16);
+  /* USER CODE END 2 */
 
 
 
 
-  Modbus_Init( MB_TYPEMODE_RTU, MB_WORKMODE_MASTER, 0x11,
-	           uart_send_buf_function, uart_reseive_buf_function,
-	           (&modbus));
+  modbus_Init(MB_TYPEMODE_ASCII,
+  		      MB_WORKMODE_MASTER,
+  			  1,
+  			  uart_send_buf_function,
+  			  &modbus);
 
 
-  //uint8_t buf_req[]  = {0x11, MB_COMMAND_READ_DISCRET_INPUT, 0x03, 0xE9, 0, 1, 0xEA, 0x6A};
-  uint8_t buf_answ[]  = {0x11, 0x02,  0x04, 0x01, 0x02, 0x03, 0x04, 0x2c, 0x4b};
+uint8_t r_frame [] = { 0x3a, 0x31, 0x31, 0x30, 0x32, 0x30, 0x33, 0x45, 0x39, 0x30, 0x30, 0x30, 0x31, 0x30, 0x30, 0x0d, 0x0a };
+//receive_cntr = sizeof(r_frame);
 
 
- // Modbus_ParseQuery(&modbus, buf_req, sizeof(buf_req));
-
-
-  Modbus_MasterRequest_ReadDisret(&modbus,
-		                          0x11,
-								  1001);
-
-
-  Modbus_ParseQuery(&modbus, buf_answ, sizeof(buf_answ));
+    modbus_MasterRequest_ReadDisret(&modbus, 17, 1001, 1);
 
 
 
-  while (1)
-  {
-	  Modbus_MasterRun(&modbus);
-  }
+    while (1)
+    {
+  	  if( modbus_Run(&modbus,   received_frame,
+				     receive_cntr,  time_last_receive)){
+  		receive_cntr = 0;
+  	  }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+void modbus_MasterError_cb(uint8_t err_code){
+
+}
+
+
+void modbus_MasterResnonse_cb(uint16_t data, uint16_t bite_inx, uint16_t total_length, bool the_end){
 
 }
 
 
 
-void ReadDiscretInputClbk(uint16_t first_reg, uint16_t number){
-	// Get necessary data from
 
-    uint8_t response_data[] = {1,2,3,4};
-	Modbus_SendResponse(&modbus, MB_COMMAND_READ_DISCRET_INPUT, response_data, sizeof(response_data), first_reg );
-}
+//
+//void modbus_WriteMultiAnalog_cb(uint16_t reg, uint16_t quantity, uint16_t *values){
+//	uint8_t data[] = {15, 10};
+//
+//	modbus_SendResponse(&modbus,
+//						MB_COMMAND_WRITE_MULTI_ANALOG,
+//						data,
+//						sizeof(data),
+//						first_reg);
+//}
+//
+//
+//void modbus_ReadDiscretInput_cb(uint16_t first_reg, uint16_t number){
+//
+//	uint8_t data[] = {15, 10};
+//
+//	modbus_SendResponse(&modbus,
+//			            MB_COMMAND_READ_DISCRETE_INPUT,
+//						data,
+//						sizeof(data),
+//						first_reg);
+//}
+//
 
 
-void WriteSingleHoldClbk(uint16_t reg, uint16_t value){
-	/*
-	 * Write necessary register by new value.
-	 * If write operation was correct than to the response should be sent the same value
-	 */
 
 
 
-	Modbus_SendResponse(&modbus, MB_COMMAND_WRITE_SINGLE_HILD, value, sizeof(value), reg );
-}
 
-
-
-void MasterErrorClbk(uint8_t err_code){
-	uint8_t df =  9;
-}
-void MasterResnonseClbk(uint16_t read){
-	uint8_t df =  9;
-}
 
 
 
