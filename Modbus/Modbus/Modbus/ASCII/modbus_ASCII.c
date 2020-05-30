@@ -1,8 +1,8 @@
 /*
- * Name        modbus_RTU.c
+ * Name        modbus_ASCII.c
  * Author      Maksim Holikov (golikov.mo@gmail.com)
  * Created on: Feb 17, 2020
- * Description Source file with definitions of the Modbus RTU functions
+ * Description Source file with definitions of the Modbus ASCII functions
  */
 
 #include <ASCII/modbus_ASCII.h>
@@ -12,18 +12,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MB_ASCII_CHAR_CR         '\n'     /*!< Default start character for Modbus ASCII. */
-#define MB_ASCII_CHAR_LF         '\r'     /*!< Default start character for Modbus ASCII. */
+#define MB_ASCII_CHAR_CR         '\n'
+#define MB_ASCII_CHAR_LF         '\r'
 #define MB_ASCII_CHAR_START      ':'     /*!< Default start character for Modbus ASCII. */
+
 #define MB_ASCII_COMMON_ADDRESS  0x00    /*!< The address which each slave should receive.
                                               This address is using to send message for all slaves on the bus */
 
 
-
-#define SIZE_OF_RESPONSE_BUF(data_len)   ( (data_len * 2) + 9) //(9) Start(1) + Addr(2) + Func(2) + LRC(2) + END(2)
 #define SIZE_OF_REQUEST_BUF(data_len)    ( (data_len * 2) + 9) //(9) Start(1) + Addr(2) + Func(2) + LRC(2) + END(2)
 
 #define GET_AS_ASCII_CHAR(val)           ( ((val) < 10) ? ((val) + 0x30) : (((val) % 10) + 0x41) )
+#define GET_AS_UINT_NUMBER(val)          ( ((val) < 0x40) ? ((val) - 0x30) : ( 10 + ((val) - 0x41))  )
+
 
 
 static uint8_t culculate_LRC( uint8_t *buf, uint16_t buflen )
@@ -32,15 +33,13 @@ static uint8_t culculate_LRC( uint8_t *buf, uint16_t buflen )
 
     while( buflen > 0 )
     {
-        uint16_t val = (*buf);
-        buf +=2;
+        uint8_t val_hi = GET_AS_UINT_NUMBER((*buf)); buf++;
+        uint8_t val_lo = GET_AS_UINT_NUMBER((*buf)); buf++;
+
+        uint8_t res_value = (val_hi << 4) | (val_lo);
+
         buflen -=2;
-
-       // uint8_t val = ((*buf) * 16); buf ++;
-       // val += (*buf); buf ++;
-       // buflen -=2;
-
-        culc_LRC += (uint8_t)val;
+        culc_LRC += res_value;
     }
 
     culc_LRC = ((0xFF - culc_LRC) + 1);
@@ -65,23 +64,21 @@ mb_error_t MBASCII_SendRequest(  bus_function         send,
    if(send_buf == NULL){
        result = MB_ERR_STATUS_FAIL_MEM_ALLOCATED;
    }else{
-       uint8_t inx = 0;
-       uint8_t sum = 0;
+       uint8_t inx               = 0;
+       uint8_t chars_of_value[2] = {0};
+
 
        send_buf[inx] = MB_ASCII_CHAR_START; inx ++;
 
-       uint8_t chars_of_value[2] = {0};
        chars_of_value[0] = (my_dev_id / 16);
        chars_of_value[1] = (my_dev_id % 16);
 
        send_buf[inx] = GET_AS_ASCII_CHAR(chars_of_value[0]); inx ++;
        send_buf[inx] = GET_AS_ASCII_CHAR(chars_of_value[1]); inx ++;
-       sum += my_dev_id;
 
        memset(chars_of_value, 0, sizeof(chars_of_value));
        chars_of_value[0] = (function / 16);
        chars_of_value[1] = (function % 16);
-       sum += function;
 
        send_buf[inx] =  GET_AS_ASCII_CHAR(chars_of_value[0]); inx ++;
        send_buf[inx] =  GET_AS_ASCII_CHAR(chars_of_value[1]); inx ++;
@@ -92,7 +89,6 @@ mb_error_t MBASCII_SendRequest(  bus_function         send,
 
            chars_of_value[0] = ((*data) / 16);
            chars_of_value[1] = ((*data) % 16);
-           sum += (*data);
 
            send_buf[inx] =  GET_AS_ASCII_CHAR(chars_of_value[0]); inx ++;
            send_buf[inx] =  GET_AS_ASCII_CHAR(chars_of_value[1]); inx ++;
@@ -100,13 +96,12 @@ mb_error_t MBASCII_SendRequest(  bus_function         send,
            data++;
        }
 
-       uint8_t lrc =  (0xFF - sum) +1;     //GetLRC(&send_buf[1], (buf_total_len - 5)  );
-       uint8_t culc = culculate_LRC(&send_buf[1], (buf_total_len - 5));
+       uint8_t culculated_lrc = culculate_LRC(&send_buf[1], (buf_total_len - 5));
 
        memset(chars_of_value, 0, sizeof(chars_of_value));
 
-       chars_of_value[0] = (lrc / 16);
-       chars_of_value[1] = (lrc % 16);
+       chars_of_value[0] = (culculated_lrc / 16);
+       chars_of_value[1] = (culculated_lrc % 16);
 
        send_buf[inx] =  GET_AS_ASCII_CHAR(chars_of_value[0]); inx++;
        send_buf[inx] =  GET_AS_ASCII_CHAR(chars_of_value[1]); inx++;
@@ -134,8 +129,6 @@ mb_error_t MBASCII_SendRequest(  bus_function         send,
 
 
 
-
-
 mb_error_t MBASCII_SendResponse(  bus_function         send,
                                   uint8_t              my_dev_id,
                                   uint16_t             first_reg,
@@ -145,23 +138,6 @@ mb_error_t MBASCII_SendResponse(  bus_function         send,
     mb_error_t result      = MB_ERR_STATUS_SUCCESS;
     uint16_t buf_total_len = 0;
     uint8_t *send_buff     = NULL;
-
-
-    buf_total_len = SIZE_OF_RESPONSE_BUF(data_len);
-	send_buff     = (uint8_t*)malloc(buf_total_len);
-
-	if(send_buff == NULL){
-		result = MB_ERR_STATUS_FAIL_MEM_ALLOCATED;
-	}else{
-		uint8_t inx = 0;
-
-
-
-
-
-
-	}
-
 
 
 

@@ -99,7 +99,15 @@ uint8_t r_frame [] = { 0x3a, 0x31, 0x31, 0x30, 0x32, 0x30, 0x33, 0x45, 0x39, 0x3
 //receive_cntr = sizeof(r_frame);
 
 
-    modbus_MasterRequest_ReadDisret(&modbus, 17, 1001, 1);
+
+
+   // modbus_MasterRequest_ReadAnalog(&modbus, 5, 1010, 18); //+
+   // modbus_MasterRequest_ReadDisret(&modbus, 5, 1010, 18); //+
+   // modbus_MasterRequest_ReadHold(&modbus, 5, 1010, 18);   //+
+
+    uint16_t val[2] = {6540, 18};
+   // modbus_MasterRequest_WriteMultiAnalogRegister(&modbus, 5, 1010, 2, val, sizeof(val)); //+
+   // modbus_MasterRequest_WriteSingleRegister(&modbus, 5, 1010, 35); //+
 
 
 
