@@ -82,7 +82,7 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
- // HAL_UART_Receive_IT(&huart2, &received_frame[receive_cntr], 16);
+  HAL_UART_Receive_IT(&huart2, &received_frame[receive_cntr], 1);
   /* USER CODE END 2 */
 
 
@@ -95,25 +95,27 @@ int main(void)
   			  &modbus);
 
 
-uint8_t r_frame [] = { 0x3a, 0x31, 0x31, 0x30, 0x32, 0x30, 0x33, 0x45, 0x39, 0x30, 0x30, 0x30, 0x31, 0x30, 0x30, 0x0d, 0x0a };
+//uint8_t r_frame [] = { 0x3a, 0x31, 0x31, 0x30, 0x32, 0x30, 0x33, 0x45, 0x39, 0x30, 0x30, 0x30, 0x31, 0x30, 0x30, 0x0d, 0x0a };
 //receive_cntr = sizeof(r_frame);
 
 
 
 
-   // modbus_MasterRequest_ReadAnalog(&modbus, 5, 1010, 18); //+
-   // modbus_MasterRequest_ReadDisret(&modbus, 5, 1010, 18); //+
-   // modbus_MasterRequest_ReadHold(&modbus, 5, 1010, 18);   //+
+    modbus_MasterRequest_ReadAnalog(&modbus, 5, 1001, 1);
+   // modbus_MasterRequest_ReadDisret(&modbus, 5, 1010, 18);
+   // modbus_MasterRequest_ReadHold(&modbus, 5, 1010, 18);
 
-    uint16_t val[2] = {6540, 18};
-   // modbus_MasterRequest_WriteMultiAnalogRegister(&modbus, 5, 1010, 2, val, sizeof(val)); //+
-   // modbus_MasterRequest_WriteSingleRegister(&modbus, 5, 1010, 35); //+
+   // uint16_t val[2] = {6540, 18};
+   // modbus_MasterRequest_WriteMultiAnalogRegister(&modbus, 5, 1010, 2, val, sizeof(val));
+   // modbus_MasterRequest_WriteSingleRegister(&modbus, 5, 1010, 35);
 
 
+    uint8_t answ[] = { 0x3a, 0x30, 0x35, 0x30, 0x34, 0x30, 0x33, 0x45, 0x39, 0x30, 0x30, 0x30, 0x31, 0x30, 0x41, 0x0d, 0x0a };
+    receive_cntr = sizeof(answ);
 
     while (1)
     {
-  	  if( modbus_Run(&modbus,   received_frame,
+  	  if( modbus_Run(&modbus,   answ,
 				     receive_cntr,  time_last_receive)){
   		receive_cntr = 0;
   	  }
