@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef enum {
@@ -88,7 +89,6 @@ mb_error_t modbus_ParseFrame(modbus_definition_t *handler, uint8_t *data, uint16
             handler->master_mode = MB_MASTER_IDLE;
             handler->status = MB_STATUS_FREE;
         } else {
-            printf("Exit by unknown \n");
             return MB_ERR_STATUS_UNKHOWN_PACKAGE;
         }
     }
@@ -166,6 +166,7 @@ mb_error_t modbus_MasterRequest_ReadDisret(modbus_definition_t *handler,
                                            uint16_t            number_of_reg) {
     mb_error_t status = MB_ERR_STATUS_BUS_BUISY;
 
+#if MODBUS_ROLE_MASTER == 1
     if (handler->status == MB_STATUS_FREE) {
 
         uint8_t data[4] = { 0 };
@@ -190,15 +191,18 @@ mb_error_t modbus_MasterRequest_ReadDisret(modbus_definition_t *handler,
             handler->request_send_time = MODBUS_GET_CURRENT_TIME;
         }
     }
-
+#endif
     return status;
 }
 
-mb_error_t modbus_MasterRequest_ReadHold(modbus_definition_t *handler, uint16_t slave_id,
-        uint16_t reg_offset, uint16_t number_of_reg) {
+mb_error_t modbus_MasterRequest_ReadHold(modbus_definition_t *handler,
+                                         uint16_t            slave_id,
+                                         uint16_t            reg_offset,
+                                         uint16_t            number_of_reg) {
 
     mb_error_t status = MB_ERR_STATUS_BUS_BUISY;
 
+#if MODBUS_ROLE_MASTER == 1
     if (handler->status == MB_STATUS_FREE) {
 
         uint8_t data[4] = { 0 };
@@ -223,15 +227,17 @@ mb_error_t modbus_MasterRequest_ReadHold(modbus_definition_t *handler, uint16_t 
             handler->request_send_time = MODBUS_GET_CURRENT_TIME;
         }
     }
-
+#endif
     return status;
 }
 
-mb_error_t modbus_MasterRequest_ReadAnalog(modbus_definition_t *handler, uint16_t slave_id,
-        uint16_t reg_offset, uint16_t number_of_reg) {
+mb_error_t modbus_MasterRequest_ReadAnalog(modbus_definition_t *handler,
+                                           uint16_t            slave_id,
+                                           uint16_t            reg_offset,
+                                           uint16_t            number_of_reg) {
 
     mb_error_t status = MB_ERR_STATUS_BUS_BUISY;
-
+#if MODBUS_ROLE_MASTER == 1
     if (handler->status == MB_STATUS_FREE) {
 
         uint8_t data[4] = { 0 };
@@ -256,15 +262,17 @@ mb_error_t modbus_MasterRequest_ReadAnalog(modbus_definition_t *handler, uint16_
             handler->request_send_time = MODBUS_GET_CURRENT_TIME;
         }
     }
-
+#endif
     return status;
 }
 
-mb_error_t modbus_MasterRequest_WriteSingleRegister(modbus_definition_t *handler, uint16_t slave_id,
-        uint16_t reg_offset, uint16_t value) {
+mb_error_t modbus_MasterRequest_WriteSingleRegister(modbus_definition_t *handler,
+                                                    uint16_t            slave_id,
+                                                    uint16_t            reg_offset,
+                                                    uint16_t            value) {
 
     mb_error_t status = MB_ERR_STATUS_BUS_BUISY;
-
+#if MODBUS_ROLE_MASTER == 1
     if (handler->status == MB_STATUS_FREE) {
 
         uint8_t data[4] = { 0 };
@@ -289,21 +297,24 @@ mb_error_t modbus_MasterRequest_WriteSingleRegister(modbus_definition_t *handler
             handler->request_send_time = MODBUS_GET_CURRENT_TIME;
         }
     }
-
+#endif
     return status;
 }
 
 mb_error_t modbus_MasterRequest_WriteMultiAnalogRegister(modbus_definition_t *handler,
-        uint16_t slave_id, uint16_t reg_offset, uint16_t quantity, uint16_t *values,
-        uint16_t length_of_value) {
+                                                         uint16_t             slave_id,
+                                                         uint16_t             reg_offset,
+                                                         uint16_t             quantity,
+                                                         uint16_t             *values,
+                                                         uint16_t             length_of_value) {
 
     mb_error_t status = MB_ERR_STATUS_BUS_BUISY;
-
+#if MODBUS_ROLE_MASTER == 1
     if (handler->status == MB_STATUS_FREE) {
 
         uint8_t inx = 0;
         uint8_t data_size = TOTAL_FRAME_SIZE_AT_MULTI_ANALOG_WRITE(length_of_value);
-        uint8_t *data = malloc(data_size);
+        uint8_t *data = (uint8_t*)malloc(data_size);
 
         if (data == NULL) {
             return MB_ERR_STATUS_FAIL_MEM_ALLOCATED;
@@ -342,6 +353,6 @@ mb_error_t modbus_MasterRequest_WriteMultiAnalogRegister(modbus_definition_t *ha
             handler->request_send_time = MODBUS_GET_CURRENT_TIME;
         }
     }
-
+#endif
     return status;
 }

@@ -34,7 +34,7 @@
 #define RECEIVED_P_RESPONSE_DATA(data, inx)      (&data[5 + (inx * 2)])
 #define RECEIVED_P_RESPONSE_ERROR(data)          (RECEIVED_P_RESPONSE_DATA(data, 0))
 
-
+#define RECEIVER_FIRST_VAL_TO_WRITE_MULTI        13
 
 
 static inline uint8_t get_byte(uint8_t *hi_part){
@@ -69,6 +69,9 @@ static void MBASCII_SendErrorCode(uint8_t err_code, uint8_t *data, uint16_t size
 //  }
 //  send(data, size);
 }
+
+
+
 
 
 mb_error_t MBASCII_SendRequest(  bus_function         send,
@@ -140,10 +143,6 @@ mb_error_t MBASCII_SendRequest(  bus_function         send,
     return result;
 }
 
-
-
-
-
 mb_error_t MBASCII_ParseFrame (uint8_t *data,
                                uint16_t data_length,
                                uint8_t  my_dev_id,
@@ -160,10 +159,12 @@ mb_error_t MBASCII_ParseFrame (uint8_t *data,
 
         if(cul_lrc == read_lrc){
             uint8_t received_address = get_byte(RECEIVED_P_ADDRESS(data));
+            result = MB_ERR_STATUS_NOT_MINE;
 
             if((received_address == my_dev_id) ||
                (received_address == MB_ASCII_COMMON_ADDRESS)){
 
+                result = MB_ERR_STATUS_SUCCESS;
                 if(is_it_master){
                     #if MODBUS_ROLE_MASTER
                     uint8_t received_finction = get_byte(RECEIVED_P_FUNCTION(data));
@@ -181,140 +182,75 @@ mb_error_t MBASCII_ParseFrame (uint8_t *data,
                             modbus_MasterResnonse_cb(read,read_length, count_reg, ((count_reg == 0)?1:0) );
                         }
                     }else{
-                      modbus_MasterError_cb(RECEIVED_P_RESPONSE_ERROR(data));
+                      modbus_MasterError_cb(get_byte(RECEIVED_P_RESPONSE_ERROR(data)));
                     }
                     #endif
                 }else{
+                   uint16_t offset_reg = (get_byte(RECEIVED_P_RESPONSE_DATA(data, 0)) << 8) |
+                                          get_byte(RECEIVED_P_RESPONSE_DATA(data, 1));
+                   uint16_t numb_reg  =  (get_byte(RECEIVED_P_RESPONSE_DATA(data, 2)) << 8) |
+                                          get_byte(RECEIVED_P_RESPONSE_DATA(data, 3));
 
+                   switch(get_byte(RECEIVED_P_FUNCTION(data))){
+
+                     #if MODBUS_COMMAND_READ_DISCRETE_INPUT_REGISTER
+                       case MB_COMMAND_READ_DISCRETE_INPUT:{
+                           modbus_ReadDiscretInput_cb(offset_reg, numb_reg);
+                           result = MB_ERR_STATUS_SUCCESS;
+                       }break;
+                     #endif
+                     #if MODBUS_COMMAND_READ_HOLD_INPUT_REGISTER
+                       case MB_COMMAND_READ_HOLD_INPUT:{
+                           modbus_ReadHold_cb(offset_reg, numb_reg);
+                           result = MB_ERR_STATUS_SUCCESS;
+                       }break;
+                     #endif
+                     #if MODBUS_COMMAND_READ_ANALOG_INPUT_REGISTER
+                       case MB_COMMAND_READ_ANALOG_INPUT:{
+                           modbus_ReadAnalog_cb(offset_reg, numb_reg);
+                           result = MB_ERR_STATUS_SUCCESS;
+                       }break;
+                     #endif
+
+                     #if MODBUS_COMMAND_WRITE_SINGLE_ANALOG_REGISTER
+                       case MB_COMMAND_WRITE_SINGLE_ANALOG:{
+                           modbus_WriteSingleAnalog_cb(offset_reg, numb_reg);
+                           result = MB_ERR_STATUS_SUCCESS;
+                       }break;
+                     #endif
+
+                     #if MODBUS_COMMAND_WRITE_MULTI_ANALOG_REGISTER
+                       case MB_COMMAND_WRITE_MULTI_ANALOG:{
+                           uint8_t count_values_to_write = (get_byte(RECEIVED_P_RESPONSE_DATA(data, 3)) >> 1); // devived on 2
+
+                           result                     = MB_ERR_STATUS_FAIL_MEM_ALLOCATED;
+                           uint8_t inx                = RECEIVER_FIRST_VAL_TO_WRITE_MULTI;
+
+                           uint16_t *values_for_write = (uint16_t*)malloc(count_values_to_write);
+
+                           if(values_for_write != NULL){
+                               result = MB_ERR_STATUS_SUCCESS;
+
+                               for(uint8_t i = 0; i < count_values_to_write; i++){
+                                   values_for_write[i]  = (data[inx] << 8); inx++;
+                                   values_for_write[i] |= data[inx];        inx++;
+                               }
+                               modbus_WriteMultiAnalog_cb(offset_reg, numb_reg, values_for_write);
+                           }
+
+                           free(values_for_write);
+                       }break;
+                     #endif
+
+                       default:
+                           break;
+                   }
                 }
             }
         }
     }
-
-
-
-
-//    if(data != NULL){
-//        uint16_t cul_crc  = GetCRC16(data,  (data_length - 2) );
-//        uint16_t read_crc = (data[data_length - 2] << 8) | data[data_length - 1];
-//        result            = MB_ERR_STATUS_CRC_FAIL;
-//
-//        if(cul_crc == read_crc){
-//            if(my_dev_id == RECEIVER_ID(data) ){
-//                if(is_it_master){
-//                    #if MODBUS_ROLE_MASTER
-//
-//                    if(RECEIVER_FUNCTION(data) == last_function){
-//                        uint16_t count_reg  = RECEIVER_NUMBER_BYTES(data);
-//
-//                        uint8_t inx = RECEIVER_FIRST_DATA_BYTE_INX;
-//                        uint16_t read_length = 0;
-//                        while(count_reg){
-//
-//                            uint16_t read = 0;
-//                            switch(RECEIVER_FUNCTION(data)){
-//                                case MB_COMMAND_READ_HOLD_INPUT:
-//                                case MB_COMMAND_READ_ANALOG_INPUT:
-//                                case MB_COMMAND_WRITE_SINGLE_ANALOG:
-//                                case MB_COMMAND_WRITE_MULTI_ANALOG:
-//                                   read = (data[inx] << 8) | data[inx++];
-//                                break;
-//                                case MB_COMMAND_READ_COIL:
-//                                case MB_COMMAND_READ_DISCRETE_INPUT:
-//                                case MB_COMMAND_WRITE_SINGLE_COIL:
-//                                case MB_COMMAND_WRITE_MULTI_DISCRETE:
-//                                    read = data[inx];
-//                                break;
-//                                default:
-//                                    break;
-//                            }
-//                            count_reg --;
-//                            read_length++;
-//
-//                            modbus_MasterResnonse_cb(read,read_length, count_reg, ((count_reg == 0)?1:0) );
-//                            inx ++;
-//                        }
-//                    }else{
-//                      modbus_MasterError_cb(RECEIVER_ERROR_CODE(data));
-//                    }
-//
-//                    #endif
-//                }else{
-//                    uint16_t offset_reg = (data[2] << 8) | data[3];
-//                    uint16_t numb_reg  = (data[4] << 8) | data[5];
-//
-//                    switch(RECEIVER_FUNCTION(data)){
-//
-//                      #if MODBUS_COMMAND_READ_DISCRETE_INPUT_REGISTER
-//                        case MB_COMMAND_READ_DISCRETE_INPUT:{
-//                            modbus_ReadDiscretInput_cb(offset_reg, numb_reg);
-//                            result = MB_ERR_STATUS_SUCCESS;
-//                        }break;
-//                      #endif
-//                      #if MODBUS_COMMAND_READ_HOLD_INPUT_REGISTER
-//                        case MB_COMMAND_READ_HOLD_INPUT:{
-//                            modbus_ReadHold_cb(offset_reg, numb_reg);
-//                            result = MB_ERR_STATUS_SUCCESS;
-//                        }break;
-//                      #endif
-//                      #if MODBUS_COMMAND_READ_ANALOG_INPUT_REGISTER
-//                        case MB_COMMAND_READ_ANALOG_INPUT:{
-//                            modbus_ReadAnalog_cb(offset_reg, numb_reg);
-//                            result = MB_ERR_STATUS_SUCCESS;
-//                        }break;
-//                      #endif
-//
-//                      #if MODBUS_COMMAND_WRITE_SINGLE_ANALOG_REGISTER
-//                        case MB_COMMAND_WRITE_SINGLE_ANALOG:{
-//                            modbus_WriteSingleAnalog_cb(offset_reg, numb_reg);
-//                            result = MB_ERR_STATUS_SUCCESS;
-//                        }break;
-//                      #endif
-//
-//                      #if MODBUS_COMMAND_WRITE_MULTI_ANALOG_REGISTER
-//                        case MB_COMMAND_WRITE_MULTI_ANALOG:{
-//                            uint8_t count_values_to_write = RECEIVER_NUMBER_DATA_BYTE_MULTI(data) >> 1; // devived on 2
-//
-//                            result                     = MB_ERR_STATUS_FAIL_MEM_ALLOCATED;
-//                            uint8_t inx                = RECEIVER_FIRST_VAL_TO_WRITE_MULTI;
-//
-//                            uint16_t *values_for_write = (uint16_t*)malloc(count_values_to_write);
-//
-//                            if(values_for_write != NULL){
-//                                result = MB_ERR_STATUS_SUCCESS;
-//
-//                                for(uint8_t i = 0; i < count_values_to_write; i++){
-//                                    values_for_write[i]  = (data[inx] << 8); inx++;
-//                                    values_for_write[i] |= data[inx];        inx++;
-//                                }
-//                                modbus_WriteMultiAnalog_cb(offset_reg, numb_reg, values_for_write);
-//                            }
-//
-//                            free(values_for_write);
-//                        }break;
-//                      #endif
-//
-//                        default:
-//                            break;
-//                    }
-//                }
-//            }
-//        }
-//    }
-
     return result;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 mb_error_t MBASCII_SendResponse(  bus_function         send,
@@ -323,97 +259,94 @@ mb_error_t MBASCII_SendResponse(  bus_function         send,
                                   uint8_t              answer_function,
                                   uint8_t              *data,
                                   uint8_t              data_len){
-    mb_error_t result      = MB_ERR_STATUS_SUCCESS;
+    mb_error_t result      = MB_ERR_STATUS_FAIL_MEM_ALLOCATED;
     uint16_t buf_total_len = 0;
-    uint8_t *send_buff     = NULL;
+    uint8_t *send_buf      = NULL;
+    uint8_t inx            = 0;
 
 
+    buf_total_len = SIZE_OF_REQUEST_BUF(data_len);
+    send_buf = (uint8_t*)malloc(buf_total_len);
 
+    if(send_buf != NULL){
 
-//    uint16_t buf_total_len = SIZE_OF_RESPONSE_BUF(data_len);
-//
-//    uint8_t *send_buff = (uint8_t*)malloc(buf_total_len);
-//
-//    uint8_t inx = 0;
-//    if(send_buff != NULL){
-//        send_buff[inx] = my_dev_id;         inx ++;
-//        send_buff[inx] = answer_function;   inx ++;
-//
-//        switch(answer_function){
-//          default:
-//          case MB_COMMAND_READ_COIL:
-//          case MB_COMMAND_READ_DISCRETE_INPUT:
-//          case MB_COMMAND_READ_HOLD_INPUT:
-//          case MB_COMMAND_READ_ANALOG_INPUT:
-//              send_buff[inx] = data_len;
-//            break;
-//          case MB_COMMAND_WRITE_SINGLE_COIL:
-//          case MB_COMMAND_WRITE_SINGLE_ANALOG:
-//          case MB_COMMAND_WRITE_MULTI_DISCRETE:
-//          case MB_COMMAND_WRITE_MULTI_ANALOG:
-//              send_buff[inx] = first_reg >> 8;
-//              inx++;
-//              send_buff[inx] = first_reg & 0xFF;
-//              break;
-//
-//        }
-//        inx ++;
-//
-//        while(data_len--){
-//            send_buff[inx] = *data;
-//            data++;
-//            inx ++;
-//        }
-//
-//        uint8_t crc = GetLRC(send_buff,  buf_total_len - 2 );
-//
-//        send_buff[inx] = (crc >> 8); inx++;
-//        send_buff[inx] = (crc & 0x00FF);
-//
-//        send(send_buff, buf_total_len);
-//        result = MB_ERR_STATUS_SUCCESS;
-//        free(send_buff);
-//    }
+        uint8_t chars_of_value[2] = {0};
+
+        chars_of_value[0] = (my_dev_id / 16);
+        chars_of_value[1] = (my_dev_id % 16);
+
+        send_buf[inx] = GET_AS_ASCII_CHAR(chars_of_value[0]); inx ++;
+        send_buf[inx] = GET_AS_ASCII_CHAR(chars_of_value[1]); inx ++;
+
+        memset(chars_of_value, 0, sizeof(chars_of_value));
+        chars_of_value[0] = (answer_function / 16);
+        chars_of_value[1] = (answer_function % 16);
+
+        send_buf[inx] = GET_AS_ASCII_CHAR(chars_of_value[0]); inx ++;
+        send_buf[inx] = GET_AS_ASCII_CHAR(chars_of_value[1]); inx ++;
+
+        switch(answer_function){
+          default:
+          case MB_COMMAND_READ_COIL:
+          case MB_COMMAND_READ_DISCRETE_INPUT:
+          case MB_COMMAND_READ_HOLD_INPUT:
+          case MB_COMMAND_READ_ANALOG_INPUT:{
+              memset(chars_of_value, 0, sizeof(chars_of_value));
+              chars_of_value[0] = (data_len / 16);
+              chars_of_value[1] = (data_len % 16);
+
+              send_buf[inx] = GET_AS_ASCII_CHAR(chars_of_value[0]); inx ++;
+              send_buf[inx] = GET_AS_ASCII_CHAR(chars_of_value[1]); inx ++;
+          }break;
+          case MB_COMMAND_WRITE_SINGLE_COIL:
+          case MB_COMMAND_WRITE_SINGLE_ANALOG:
+          case MB_COMMAND_WRITE_MULTI_DISCRETE:
+          case MB_COMMAND_WRITE_MULTI_ANALOG:{
+
+              memset(chars_of_value, 0, sizeof(chars_of_value));
+              chars_of_value[0] = ((first_reg >> 8) / 16);
+              chars_of_value[1] = ((first_reg >> 8) % 16);
+
+              send_buf[inx] = GET_AS_ASCII_CHAR(chars_of_value[0]); inx ++;
+              send_buf[inx] = GET_AS_ASCII_CHAR(chars_of_value[1]); inx ++;
+
+              memset(chars_of_value, 0, sizeof(chars_of_value));
+              chars_of_value[0] = ((first_reg & 0xFF) / 16);
+              chars_of_value[1] = ((first_reg & 0xFF) % 16);
+
+              send_buf[inx] = GET_AS_ASCII_CHAR(chars_of_value[0]); inx ++;
+              send_buf[inx] = GET_AS_ASCII_CHAR(chars_of_value[1]); inx ++;
+          }
+              break;
+        }
+
+        while(data_len--){
+            memset(chars_of_value, 0, sizeof(chars_of_value));
+            chars_of_value[0] = ((*data) / 16);
+            chars_of_value[1] = ((*data) % 16);
+
+            send_buf[inx] = GET_AS_ASCII_CHAR(chars_of_value[0]); inx ++;
+            send_buf[inx] = GET_AS_ASCII_CHAR(chars_of_value[1]); inx ++;
+
+            data++;
+        }
+
+        uint8_t culculated_lrc = culculate_LRC(&send_buf[1], (buf_total_len - 5));
+
+        memset(chars_of_value, 0, sizeof(chars_of_value));
+
+        chars_of_value[0] = (culculated_lrc / 16);
+        chars_of_value[1] = (culculated_lrc % 16);
+
+        send_buf[inx] =  GET_AS_ASCII_CHAR(chars_of_value[0]); inx++;
+        send_buf[inx] =  GET_AS_ASCII_CHAR(chars_of_value[1]); inx++;
+
+        send_buf[inx] = MB_ASCII_CHAR_LF; inx++;
+        send_buf[inx] = MB_ASCII_CHAR_CR;
+
+        send(send_buf, buf_total_len);
+        result = MB_ERR_STATUS_SUCCESS;
+        free(send_buf);
+    }
     return result;
 }
-
-
-
-
-
-
-
-
-
-
-//============
-
-//==========
-
-
-
-
-
-
-
-//
-//#define RECEIVER_ID(data)                          (data[0])
-//#define RECEIVER_FUNCTION(data)                    (data[1])
-//#define RECEIVER_ERROR_CODE(data)                  (data[2])
-//#define RECEIVER_NUMBER_BYTES(data)                (data[2])
-//#define RECEIVER_NUMBER_DATA_BYTE_MULTI(data)      (data[6])
-//
-//
-//#define RECEIVER_FIRST_DATA_BYTE_INX               3
-//#define RECEIVER_FIRST_VAL_TO_WRITE_MULTI          7
-//
-//
-//
-//
-//
-//
-
-
-
-
-

@@ -34,13 +34,16 @@ typedef enum{
     MB_ERR_STATUS_UNCORRECT_PARAM,   /**< Input parameters not as expected*/
     MB_ERR_STATUS_BUS_BUISY,
 
-    MB_ERR_STATUS_CRC_FAIL,          /**< This error code means that CRC of received package
-                                          and calculated CRC for received package are not equal*/
+    MB_ERR_STATUS_CRC_FAIL,          /**< This error code means that CRC(LRC) of received package
+                                          and calculated CRC(LRC) for received package are not equal*/
     MB_ERR_STATUS_FAIL_MEM_ALLOCATED,/**< This code means that memory for the frame was not allocated*/
 
     MB_ERR_STATUS_UNKHOWN_PACKAGE,    /**< This error code means that received package was not recognized*/
 
-    MB_ERR_STATUS_NOT_SUPPORTED       /**< Not realized or disabled functionality*/
+    MB_ERR_STATUS_NOT_SUPPORTED,       /**< Not realized or disabled functionality*/
+
+    MB_ERR_STATUS_NOT_MINE             /**< This error code will return if the id of the received message
+                                            doesn`t equal to the current device id or '0'*/
 }mb_error_t;
 
 /**

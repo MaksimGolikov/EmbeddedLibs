@@ -89,7 +89,7 @@ int main(void)
 
 
   modbus_Init(MB_TYPEMODE_ASCII,
-  		      MB_WORKMODE_MASTER,
+  		      MB_WORKMODE_SLAVE,
   			  1,
   			  uart_send_buf_function,
   			  &modbus);
@@ -101,7 +101,7 @@ int main(void)
 
 
 
-    modbus_MasterRequest_ReadAnalog(&modbus, 5, 1001, 1);
+   // modbus_MasterRequest_ReadAnalog(&modbus, 5, 1001, 1);
    // modbus_MasterRequest_ReadDisret(&modbus, 5, 1010, 18);
    // modbus_MasterRequest_ReadHold(&modbus, 5, 1010, 18);
 
@@ -110,12 +110,15 @@ int main(void)
    // modbus_MasterRequest_WriteSingleRegister(&modbus, 5, 1010, 35);
 
 
-    uint8_t answ[] = { 0x3a, 0x30, 0x35, 0x30, 0x34, 0x30, 0x33, 0x45, 0x39, 0x30, 0x30, 0x30, 0x31, 0x30, 0x41, 0x0d, 0x0a };
-    receive_cntr = sizeof(answ);
+   // uint8_t answ[] = { 0x3a, 0x30, 0x35, 0x30, 0x34, 0x30, 0x33, 0x45, 0x39, 0x30, 0x30, 0x30, 0x31, 0x30, 0x41, 0x0d, 0x0a };
+   // receive_cntr = sizeof(answ);
+
+    uint8_t req[] = { 0x3a, 0x31, 0x31, 0x30, 0x32, 0x30, 0x33, 0x45, 0x39, 0x30, 0x30, 0x31, 0x34, 0x45, 0x44, 0x0d, 0x0a};
+    receive_cntr = sizeof(req);
 
     while (1)
     {
-  	  if( modbus_Run(&modbus,   answ,
+  	  if( modbus_Run(&modbus,   req,
 				     receive_cntr,  time_last_receive)){
   		receive_cntr = 0;
   	  }
@@ -144,29 +147,19 @@ void modbus_MasterResnonse_cb(uint16_t data, uint16_t bite_inx, uint16_t total_l
 
 
 
-//
-//void modbus_WriteMultiAnalog_cb(uint16_t reg, uint16_t quantity, uint16_t *values){
-//	uint8_t data[] = {15, 10};
-//
-//	modbus_SendResponse(&modbus,
-//						MB_COMMAND_WRITE_MULTI_ANALOG,
-//						data,
-//						sizeof(data),
-//						first_reg);
-//}
-//
-//
-//void modbus_ReadDiscretInput_cb(uint16_t first_reg, uint16_t number){
-//
-//	uint8_t data[] = {15, 10};
-//
-//	modbus_SendResponse(&modbus,
-//			            MB_COMMAND_READ_DISCRETE_INPUT,
-//						data,
-//						sizeof(data),
-//						first_reg);
-//}
-//
+
+
+void modbus_ReadDiscretInput_cb(uint16_t first_reg, uint16_t number){
+
+	uint8_t data[] = {15, 10};
+
+	modbus_SendResponse(&modbus,
+			            MB_COMMAND_READ_DISCRETE_INPUT,
+						data,
+						sizeof(data),
+						first_reg);
+}
+
 
 
 

@@ -20,7 +20,7 @@
 
 
 #define RECEIVER_FIRST_DATA_BYTE_INX               3
-#define RECEIVER_FIRST_VAL_TO_WRITE_MULTI          7
+#define RECEIVER_FIRST_VAL_TO_WRITE_MULTI          4
 
 
 
@@ -108,7 +108,10 @@ mb_error_t MBRTU_ParseFrame (uint8_t *data,
         result            = MB_ERR_STATUS_CRC_FAIL;
 
         if(cul_crc == read_crc){
+            result = MB_ERR_STATUS_NOT_MINE;
+
             if(my_dev_id == RECEIVER_ID(data) ){
+                result = MB_ERR_STATUS_SUCCESS;
                 if(is_it_master){
                     #if MODBUS_ROLE_MASTER
 
@@ -192,8 +195,8 @@ mb_error_t MBRTU_ParseFrame (uint8_t *data,
                                 result = MB_ERR_STATUS_SUCCESS;
 
                                 for(uint8_t i = 0; i < count_values_to_write; i++){
-                                    values_for_write[i]  = (data[inx] << 8); inx++;
-                                    values_for_write[i] |= data[inx];        inx++;
+                                    values_for_write[i] = (get_byte(&data[inx]) << 8);  inx++;
+                                    values_for_write[i] |= get_byte(&data[inx]); inx++;
                                 }
                                 modbus_WriteMultiAnalog_cb(offset_reg, numb_reg, values_for_write);
                             }
