@@ -1,150 +1,147 @@
-                MODBUS library
+# MODBUS library
 
+## Overview
 
-This is a library to work with modbus protocol.
+This is a library to work with Modbus protocol.
 The current version supports next modes:
-    - RTU   
-    - ASCII
-    - TCP (further)
+
+* RTU   
+* ASCII
     
-This realizaton of the Modbus library supports next commands:
-	- read discrete input function        (0x02);
-	- read hold input function            (0x03);
-    - read hold input function            (0x04);
-    - write hold register function        (0x06);
-    - write few analog registers function (0x10).
+The current version of the Modbus library supports the next commands:
 
-You can configurate the library to work it both variant master/slave;
+| Command | Description |
+|--|--|
+| *0x02* | read discrete input |
+| *0x03* | read hold input |
+| *0x04* | read analog input |
+| *0x06* | write hold register |
+| *0x10* | write few analog registers |
 
-Also, this realization supports possible to enable/disable compiling the functions for saving space in the device memory.
+You can configure the library to work it both variant *master/slave*.  
+Also, this realization supports disabling compiling of the functions for saving space in the device memory.  
 
-To do this, set necessary configurations in the modbus_config.h file; this file contains the common settings for the library, so before you are going to use the library, you should update settings if it is necessary.
-
+All configurations can be done in the [**modbus_config.h**](./modbus_config.h) file. It contains the common settings, so before using the library update configurations in this file.
 
     
-=====  RTC ======
+## RTC 
+
+TBD
+
+## ASCII
+
+The current version doesn't support parity for the ASCII frame.  
+This version is using **CRLF** as the end of the frame.
 
 
-===== ASCII ======
-
-Curent version unsupport paritet for the ASCII frame. 
-This version is using CRLF as and of the frame.
+## Example
 
 
-======= EXAMPLE =======
+### Master
+
+```c
+static uint8_t received_frame [MAX_FRANE_SIZE] = {0};
+static uint8_t receive_cntr         = 0;
+static uint32_t time_last_receive   = 0;
+
+int8_t send_function (uint8_t *buf, uint16_t buff_length){
+	int8_t st = Send(buf, buff_length); // type of the send function deends on bus which going to use
+	return ( st == HAL_OK)?0:1;
+}
 
 
-	=== Master
+void RX_Callback(uint8_t symb){
 
-	static uint8_t received_frame [MAX_FRANE_SIZE] = {0};
-    static uint8_t receive_cntr         = 0;
-    static uint32_t time_last_receive   = 0;
+	received_frame[receive_cntr] = symb;
+	receive_cntr++;
+	time_last_receive = GetTick();
+}
 
-	int8_t send_function (uint8_t *buf, uint16_t buff_length){
-		int8_t st = Send(buf, buff_length); // type of the send function deends on bus which going to use
-		return ( st == HAL_OK)?0:1;
+
+void modbus_MasterError_cb(uint8_t err_code){
+	// communication error handler
+}
+
+
+void modbus_MasterResnonse_cb(uint16_t data, uint16_t bite_inx, uint16_t total_length, bool the_end){
+	// parsing responce fro the slave
+}
+
+
+modbus_definition_t modbus;
+
+
+int main(void){
+
+	modbus_Init(MB_TYPEMODE_RTC,      //MB_TYPEMODE_ASCII  MB_TYPEMODE_RTC
+				MB_WORKMODE_MASTER,
+				0,
+				send_function,
+				&modbus);
+
+	while(1){
+		if( modbus_Run(&modbus,   received_frame, receive_cntr,  time_last_receive)){
+			receive_cntr = 0;
+		}
 	}
+}
+```
+
+### Slave
+
+```c
+static uint8_t received_frame [MAX_FRANE_SIZE] = {0};
+static uint8_t receive_cntr         = 0;
+static uint32_t time_last_receive   = 0;
+
+modbus_definition_t modbus;
 
 
-	void RX_Callback(uint8_t symb){
+int8_t send_function (uint8_t *buf, uint16_t buff_length){
+	int8_t st = Send(buf, buff_length); // type of the send function deends on bus which going to use
+	return ( st == HAL_OK)?0:1;
+}
 
-		received_frame[receive_cntr] = symb;
-		receive_cntr++;
-		time_last_receive = GetTick();
+
+void RX_Callback(uint8_t symb){
+
+	received_frame[receive_cntr] = symb;
+	receive_cntr++;
+	time_last_receive = GetTick();
+}
+
+
+void modbus_ReadDiscretInput_cb(uint16_t first_reg, uint16_t number){
+
+	uint8_t data[] = {15, 10};
+
+	modbus_SendResponse(&modbus,
+						MB_COMMAND_READ_DISCRETE_INPUT,
+						data,
+						sizeof(data),
+						first_reg);
+}
+
+
+int main(void){
+
+	modbus_Init(MB_TYPEMODE_RTC,    //MB_TYPEMODE_ASCII MB_TYPEMODE_RTC
+				MB_WORKMODE_SLAVE,
+				DEV_ID,             // salve id on the bus     
+				send_function,
+				&modbus);
+
+	while(1){
+		if( modbus_Run(&modbus,   received_frame, receive_cntr,  time_last_receive)){
+			receive_cntr = 0;
+		}
 	}
+}
 
+```
 
-	void modbus_MasterError_cb(uint8_t err_code){
-		// communication error handler
-	}
+## Plans
 
-
-	void modbus_MasterResnonse_cb(uint16_t data, uint16_t bite_inx, uint16_t total_length, bool the_end){
-		// parsing responce fro the slave
-	}
-
-
-
-
-	modbus_definition_t modbus;
-
-
-
-
-	main(){
-
-
-		modbus_Init(MB_TYPEMODE_RTC,      //MB_TYPEMODE_ASCII  MB_TYPEMODE_RTC
-  		      		MB_WORKMODE_MASTER,
-  			  		0,
-  			  		send_function,
-  			  		&modbus);
-
-
-
-
-	  	while(1){
-	  		if( modbus_Run(&modbus,   received_frame, receive_cntr,  time_last_receive)){
-	  			receive_cntr = 0;
-	  		}
-	  	}
-  	}
-
-
-=== Slave
-
-	static uint8_t received_frame [MAX_FRANE_SIZE] = {0};
-    static uint8_t receive_cntr         = 0;
-    static uint32_t time_last_receive   = 0;
-
-    modbus_definition_t modbus;
-
-
-	int8_t send_function (uint8_t *buf, uint16_t buff_length){
-		int8_t st = Send(buf, buff_length); // type of the send function deends on bus which going to use
-		return ( st == HAL_OK)?0:1;
-	}
-
-
-	void RX_Callback(uint8_t symb){
-
-		received_frame[receive_cntr] = symb;
-		receive_cntr++;
-		time_last_receive = GetTick();
-	}
-
-
-
-	
-
-	void modbus_ReadDiscretInput_cb(uint16_t first_reg, uint16_t number){
-
-		uint8_t data[] = {15, 10};
-
-		modbus_SendResponse(&modbus,
-				            MB_COMMAND_READ_DISCRETE_INPUT,
-							data,
-							sizeof(data),
-							first_reg);
-	}
-
-
-	main(){
-
-
-		modbus_Init(MB_TYPEMODE_RTC,    //MB_TYPEMODE_ASCII MB_TYPEMODE_RTC
-  		      		MB_WORKMODE_SLAVE,
-  			  		DEV_ID,             // salve id on the bus     
-  			  		send_function,
-  			  		&modbus);
-
-
-
-
-	  	while(1){
-	  		if( modbus_Run(&modbus,   received_frame, receive_cntr,  time_last_receive)){
-	  			receive_cntr = 0;
-	  		}
-	  	}
-  	}
+* Add functions to support other Modbus commands
+* Add support for Modbus TCP
 
