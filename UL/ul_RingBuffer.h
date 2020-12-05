@@ -43,9 +43,11 @@ RingBuffer_Messages_t ul_RingBuffer_Create(RingBuffer_t *ptrRingBuffer, uint8_t*
  * @brief function for save one byte to buffer
  * @param ptrRingBuffer - pointer to necessary riing buffer
  * @param newData       - pointer to necessary data
+ * @param size          - size of the pushing data
  * @return              - operation state
  */
-RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* newData);
+RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer, void* newData, uint8_t size);
+
 /**
  * @brief function for get data from ring buffer
  * @param ptrRingBuffer - pointer to necessary ring buffer
@@ -53,7 +55,7 @@ RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* ne
  * @param sizeData      - pointer to value what will be contain size of read data
  * @return              - operation state
  */
-RingBuffer_Messages_t ul_RingBuffer_Pop(RingBuffer_t *ptrRingBuffer,uint8_t* readData, uint16_t* sizeData);
+RingBuffer_Messages_t ul_RingBuffer_Pop(RingBuffer_t *ptrRingBuffer, void* readData, uint8_t* sizeData);
 
 
 

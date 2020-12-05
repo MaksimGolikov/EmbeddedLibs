@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "UL/ul_RingBuffer.h"
+#include "ring_buff/ul_RingBuffer.h"
 
 
 static uint8_t indexIncrement(uint8_t currentIndex,uint8_t sizeData, uint8_t maxValue);
@@ -34,9 +34,9 @@ RingBuffer_Messages_t ul_RingBuffer_Create(RingBuffer_t *ptrRingBuffer, uint8_t*
 
 
 
-RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* newData){
+RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer,void* newData, uint8_t size){
 	RingBuffer_Messages_t returnValue = initializationError;
-    uint8_t dataSize = strlen( (char*)newData);
+    uint8_t dataSize = size;
 
 	if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
 			returnValue = initializationError;
@@ -45,23 +45,24 @@ RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* ne
 		} else {
 
 			ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexWrite] = dataSize;
-			ptrRingBuffer->indexWrite = indexIncrement(ptrRingBuffer->indexWrite,dataSize,ptrRingBuffer->size);
+			ptrRingBuffer->indexWrite = indexIncrement(ptrRingBuffer->indexWrite,1,ptrRingBuffer->size);
 
-			if( (dataSize+ptrRingBuffer->indexWrite) < ptrRingBuffer->size){
-				memcpy(&(ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexWrite]),newData,dataSize);
-				ptrRingBuffer->indexWrite=indexIncrement(ptrRingBuffer->indexWrite,dataSize,ptrRingBuffer->size);
+			if( (dataSize + ptrRingBuffer->indexWrite) < ptrRingBuffer->size){
+				memcpy(&(ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexWrite]), newData, dataSize);
+				ptrRingBuffer->indexWrite = indexIncrement(ptrRingBuffer->indexWrite, dataSize, ptrRingBuffer->size);
 			}
 			else{
 				uint8_t FirstPart;
 				uint8_t SecondPart;
 
-				FirstPart=ptrRingBuffer->size-ptrRingBuffer->indexWrite;
-				SecondPart=dataSize-FirstPart;
+				FirstPart  = ptrRingBuffer->size - ptrRingBuffer->indexWrite;
+				SecondPart = dataSize - FirstPart;
 
-				memcpy(&(ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexWrite]),newData,FirstPart);
-				ptrRingBuffer->indexWrite=indexIncrement(ptrRingBuffer->indexWrite,FirstPart,ptrRingBuffer->size);
-				memcpy(&(ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexWrite]),&(newData[FirstPart]),SecondPart);
-				ptrRingBuffer->indexWrite=indexIncrement(ptrRingBuffer->indexWrite,SecondPart,ptrRingBuffer->size);
+				memcpy(&(ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexWrite]), newData, FirstPart);
+				ptrRingBuffer->indexWrite = indexIncrement(ptrRingBuffer->indexWrite, FirstPart, ptrRingBuffer->size);
+
+				memcpy(&(ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexWrite]), &newData[FirstPart], SecondPart);
+				ptrRingBuffer->indexWrite = indexIncrement(ptrRingBuffer->indexWrite, SecondPart, ptrRingBuffer->size);
 			}
 			ptrRingBuffer->fullness  += (dataSize + 1);
 			returnValue = ok;
@@ -70,7 +71,7 @@ RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer,uint8_t* ne
  return returnValue;
 }
 
-RingBuffer_Messages_t ul_RingBuffer_Pop(RingBuffer_t *ptrRingBuffer, uint8_t* readData, uint16_t* sizeData){
+RingBuffer_Messages_t ul_RingBuffer_Pop(RingBuffer_t *ptrRingBuffer, void* readData, uint8_t* sizeData){
 	RingBuffer_Messages_t returnValue = initializationError;
 
 		if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
@@ -80,30 +81,28 @@ RingBuffer_Messages_t ul_RingBuffer_Pop(RingBuffer_t *ptrRingBuffer, uint8_t* re
 		} else {
 
 			uint8_t DataSize = ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexRead];
-			ptrRingBuffer->indexRead=indexIncrement(ptrRingBuffer->indexRead,1,ptrRingBuffer->size);
+			ptrRingBuffer->indexRead = indexIncrement(ptrRingBuffer->indexRead, 1, ptrRingBuffer->size);
 
-		   if( (ptrRingBuffer->indexRead+DataSize)<=ptrRingBuffer->size){
+		   if( (ptrRingBuffer->indexRead+DataSize) <= ptrRingBuffer->size){
 
-			   memcpy(readData, &(ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexRead]), DataSize);
-			   ptrRingBuffer->indexRead=indexIncrement(ptrRingBuffer->indexRead,DataSize,ptrRingBuffer->size);
+			   memcpy(readData, &ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexRead], DataSize);
+			   ptrRingBuffer->indexRead = indexIncrement(ptrRingBuffer->indexRead, DataSize, ptrRingBuffer->size);
 
 		   }else{
 
-			uint8_t FirstPart;
-			uint8_t SecondPart;
+			uint8_t FirstPart  = ptrRingBuffer->size-ptrRingBuffer->indexRead;
+			uint8_t SecondPart = DataSize - FirstPart;
 
-			FirstPart=ptrRingBuffer->size-ptrRingBuffer->indexRead;
-			SecondPart=DataSize-FirstPart;
+			memcpy(readData, &ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexRead], FirstPart);
+			ptrRingBuffer->indexRead = indexIncrement(ptrRingBuffer->indexRead, FirstPart, ptrRingBuffer->size);
 
-			memcpy(readData,&(ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexRead]),FirstPart);
-			ptrRingBuffer->indexRead=indexIncrement(ptrRingBuffer->indexRead,FirstPart,ptrRingBuffer->size);
-			memcpy(&(readData[FirstPart]),&(ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexRead]),SecondPart);
-			ptrRingBuffer->indexRead=indexIncrement(ptrRingBuffer->indexRead,SecondPart,ptrRingBuffer->size);
+			memcpy(&readData[FirstPart], &ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexRead], SecondPart);
+			ptrRingBuffer->indexRead = indexIncrement(ptrRingBuffer->indexRead, SecondPart, ptrRingBuffer->size);
 
 		   }
 
-			ptrRingBuffer->fullness -= ( DataSize +1) ;
-			(*sizeData)=DataSize;
+			ptrRingBuffer->fullness -= ( DataSize + 1) ;
+			(*sizeData) = DataSize;
 
 			returnValue = ok;
 		}
@@ -196,8 +195,8 @@ RingBuffer_Messages_t ul_RingBuffer_Clear(RingBuffer_t *ptrRingBuffer){
 static uint8_t indexIncrement(uint8_t currentIndex,uint8_t sizeData, uint8_t maxValue) {
 	uint8_t returnValue = currentIndex;
 
-	if(currentIndex+sizeData<=(maxValue-1))
-		returnValue+=sizeData ;
+	if(currentIndex + sizeData <= (maxValue - 1))
+		returnValue += sizeData ;
 	else
 		returnValue=0;
 
