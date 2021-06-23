@@ -1,33 +1,27 @@
-/*
- * Name        ul_RingBuffer.h
- * Author      Maksim Golikov (SW developer)
- * Created on: Apr 12, 2016
- * Description utility for store data (header file)
- */
-
 #include <stdint.h>
 #include <stddef.h>
 
 typedef struct {
-	uint8_t size;
-	uint8_t fullness;
-	uint8_t* ptrBuffer;
-	uint8_t indexWrite;
-	uint8_t indexRead;
-	uint8_t tmpReceivedSize;
-	uint8_t tmpStartIndex;
+    uint8_t size;             /*!< Total size of the buffer in bytes*/
+    uint8_t fullness;         /*!< Number of bytes which are being used */
+    uint8_t* ptrBuffer;       /*!< Pointer to the pice of memory which is going to be used for storing*/
+    uint8_t indexWrite;       /*!< Pointer to next cell to write*/
+    uint8_t indexRead;        /*!< Pointer to next cell to read*/
+    uint8_t tmpReceivedSize;  /*!< Nuber of the received bytes. This field is beig used for culculating size of package*/
+    uint8_t tmpStartIndex;    /*!< Pointer to the cell for write size of the package*/
+    uint8_t packageAmounts;   /*!< Amount of the sored packages */
 }RingBuffer_t;
 
 typedef enum {
-	ok,
-	bufferIsFull,
-	bufferIsEmpty,
-	initializationError
+    ringbuff_ok,
+    ringbuff_bufferIsFull,
+    ringbuff_bufferIsEmpty,
+    ringbuff_initializationError
 }RingBuffer_Messages_t;
 
 
 /**
- * @brief function for create ring buffer
+ * @brief function to create ring buffer
  * @param ptrRingBuffer - pointer to necessary ring buffer
  * @param ptrBuffer     - pointer to buffer what will be use
  * @param size          - size of buffer what will be use

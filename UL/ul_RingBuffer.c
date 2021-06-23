@@ -11,22 +11,22 @@
 
 #include "ring_buff/ul_RingBuffer.h"
 
-
 static uint8_t indexIncrement(uint8_t currentIndex,uint8_t sizeData, uint8_t maxValue);
 
 
 RingBuffer_Messages_t ul_RingBuffer_Create(RingBuffer_t *ptrRingBuffer, uint8_t* ptrBuffer, uint8_t size) {
-	RingBuffer_Messages_t returnValue = initializationError;
+	RingBuffer_Messages_t returnValue = ringbuff_initializationError;
 
 	if ((size != 0)&&(ptrBuffer != NULL)) {
-		ptrRingBuffer->size = size;
-		ptrRingBuffer->ptrBuffer = ptrBuffer;
-		ptrRingBuffer->fullness = 0;
-		ptrRingBuffer->indexRead = 0;
-		ptrRingBuffer->indexWrite = 0;
-		returnValue = ok;
+		ptrRingBuffer->size           = size;
+		ptrRingBuffer->ptrBuffer      = ptrBuffer;
+		ptrRingBuffer->fullness       = 0;
+		ptrRingBuffer->indexRead      = 0;
+		ptrRingBuffer->indexWrite     = 0;
+		ptrRingBuffer->packageAmounts = 0;
+		returnValue = ringbuff_ok;
 	} else {
-		returnValue = initializationError;
+		returnValue = ringbuff_initializationError;
 	}
 
 	return returnValue;
@@ -35,18 +35,18 @@ RingBuffer_Messages_t ul_RingBuffer_Create(RingBuffer_t *ptrRingBuffer, uint8_t*
 
 
 RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer,void* newData, uint8_t size){
-	RingBuffer_Messages_t returnValue = initializationError;
+	RingBuffer_Messages_t returnValue = ringbuff_initializationError;
     uint8_t dataSize = size;
 
 	if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
-			returnValue = initializationError;
+			returnValue = ringbuff_initializationError;
 		} else if ( ptrRingBuffer->fullness + dataSize >= ptrRingBuffer->size) {
-			returnValue = bufferIsFull;
+			returnValue = ringbuff_bufferIsFull;
 		} else {
 
 			ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexWrite] = dataSize;
-			ptrRingBuffer->indexWrite = indexIncrement(ptrRingBuffer->indexWrite,1,ptrRingBuffer->size);
-
+			ptrRingBuffer->indexWrite = indexIncrement(ptrRingBuffer->indexWrite, 1, ptrRingBuffer->size);
+			ptrRingBuffer->packageAmounts++;
 			if( (dataSize + ptrRingBuffer->indexWrite) < ptrRingBuffer->size){
 				memcpy(&(ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexWrite]), newData, dataSize);
 				ptrRingBuffer->indexWrite = indexIncrement(ptrRingBuffer->indexWrite, dataSize, ptrRingBuffer->size);
@@ -65,21 +65,22 @@ RingBuffer_Messages_t ul_RingBuffer_Push(RingBuffer_t *ptrRingBuffer,void* newDa
 				ptrRingBuffer->indexWrite = indexIncrement(ptrRingBuffer->indexWrite, SecondPart, ptrRingBuffer->size);
 			}
 			ptrRingBuffer->fullness  += (dataSize + 1);
-			returnValue = ok;
+			returnValue = ringbuff_ok;
 
 		}
  return returnValue;
 }
 
 RingBuffer_Messages_t ul_RingBuffer_Pop(RingBuffer_t *ptrRingBuffer, void* readData, uint8_t* sizeData){
-	RingBuffer_Messages_t returnValue = initializationError;
+	RingBuffer_Messages_t returnValue = ringbuff_initializationError;
 
 		if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
-			returnValue = initializationError;
+			returnValue = ringbuff_initializationError;
 		} else if ( ptrRingBuffer->fullness == 0) {
-			returnValue = bufferIsEmpty;
+			returnValue = ringbuff_bufferIsEmpty;
 		} else {
 
+			ptrRingBuffer->packageAmounts--;
 			uint8_t DataSize = ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexRead];
 			ptrRingBuffer->indexRead = indexIncrement(ptrRingBuffer->indexRead, 1, ptrRingBuffer->size);
 
@@ -104,7 +105,7 @@ RingBuffer_Messages_t ul_RingBuffer_Pop(RingBuffer_t *ptrRingBuffer, void* readD
 			ptrRingBuffer->fullness -= ( DataSize + 1) ;
 			(*sizeData) = DataSize;
 
-			returnValue = ok;
+			returnValue = ringbuff_ok;
 		}
 
 		return returnValue;
@@ -113,63 +114,65 @@ RingBuffer_Messages_t ul_RingBuffer_Pop(RingBuffer_t *ptrRingBuffer, void* readD
 
 
 RingBuffer_Messages_t ul_RingBuffer_CreatePackage(RingBuffer_t *ptrRingBuffer){
-	RingBuffer_Messages_t returnValue = initializationError;
+	RingBuffer_Messages_t returnValue = ringbuff_initializationError;
 
 		if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
-			returnValue = initializationError;
+			returnValue = ringbuff_initializationError;
 		} else if ( ptrRingBuffer->fullness >= ptrRingBuffer->size) {
-			returnValue = bufferIsFull;
+			returnValue = ringbuff_bufferIsFull;
 		} else {
 			ptrRingBuffer->tmpReceivedSize = 0;
-			ptrRingBuffer->tmpStartIndex = ptrRingBuffer->indexWrite;
-			ptrRingBuffer->indexWrite = indexIncrement(ptrRingBuffer->indexWrite,1,ptrRingBuffer->size);
-			ptrRingBuffer->fullness = ptrRingBuffer->fullness + 1;
-			returnValue = ok;
+			ptrRingBuffer->tmpStartIndex   = ptrRingBuffer->indexWrite;
+			ptrRingBuffer->indexWrite      = indexIncrement(ptrRingBuffer->indexWrite, 1, ptrRingBuffer->size);
+			ptrRingBuffer->fullness        = ptrRingBuffer->fullness + 1;
+			returnValue = ringbuff_ok;
 		}
 
 		return returnValue;
 }
 
 RingBuffer_Messages_t ul_RingBuffer_PushByte(RingBuffer_t *ptrRingBuffer, uint8_t newByte){
-	RingBuffer_Messages_t returnValue = initializationError;
+	RingBuffer_Messages_t returnValue = ringbuff_initializationError;
 
 		if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
-			returnValue = initializationError;
+			returnValue = ringbuff_initializationError;
 		} else if ( ptrRingBuffer->fullness >= ptrRingBuffer->size) {
-			returnValue = bufferIsFull;
+			returnValue = ringbuff_bufferIsFull;
 		} else {
 			ptrRingBuffer->ptrBuffer[ptrRingBuffer->indexWrite] = newByte;
-			ptrRingBuffer->indexWrite = indexIncrement(ptrRingBuffer->indexWrite,1,ptrRingBuffer->size);
-			ptrRingBuffer->fullness = ptrRingBuffer->fullness + 1;
+			ptrRingBuffer->indexWrite = indexIncrement(ptrRingBuffer->indexWrite, 1, ptrRingBuffer->size);
+			ptrRingBuffer->fullness   = ptrRingBuffer->fullness + 1;
 			ptrRingBuffer->tmpReceivedSize = ptrRingBuffer->tmpReceivedSize + 1;
-			returnValue = ok;
+			returnValue = ringbuff_ok;
 		}
 
 		return returnValue;
 }
 
 RingBuffer_Messages_t ul_RingBuffer_FinalizePackage(RingBuffer_t *ptrRingBuffer){
-	RingBuffer_Messages_t returnValue = initializationError;
+	RingBuffer_Messages_t returnValue = ringbuff_initializationError;
 
 		if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
-			returnValue = initializationError;
+			returnValue = ringbuff_initializationError;
 		} else {
+			ptrRingBuffer->packageAmounts++;
 			ptrRingBuffer->ptrBuffer[ptrRingBuffer->tmpStartIndex] = ptrRingBuffer->tmpReceivedSize;
-			returnValue = ok;
+			returnValue = ringbuff_ok;
 		}
 
 		return returnValue;
 }
 
 RingBuffer_Messages_t ul_RingBuffer_RemovePackage(RingBuffer_t *ptrRingBuffer){
-	RingBuffer_Messages_t returnValue = initializationError;
+	RingBuffer_Messages_t returnValue = ringbuff_initializationError;
 
 		if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
-			returnValue = initializationError;
+			returnValue = ringbuff_initializationError;
 		} else {
 			ptrRingBuffer->indexWrite = ptrRingBuffer->tmpStartIndex;
 			ptrRingBuffer->fullness = ptrRingBuffer->fullness - ptrRingBuffer->tmpReceivedSize - 1;
-			returnValue = ok;
+			ptrRingBuffer->packageAmounts--;
+			returnValue = ringbuff_ok;
 		}
 
 		return returnValue;
@@ -177,15 +180,16 @@ RingBuffer_Messages_t ul_RingBuffer_RemovePackage(RingBuffer_t *ptrRingBuffer){
 
 
 RingBuffer_Messages_t ul_RingBuffer_Clear(RingBuffer_t *ptrRingBuffer){
-    RingBuffer_Messages_t returnValue = initializationError;
+    RingBuffer_Messages_t returnValue = ringbuff_initializationError;
 
 		if ((ptrRingBuffer->size == 0) && (ptrRingBuffer->ptrBuffer == NULL)) {
-			returnValue = initializationError;
+			returnValue = ringbuff_initializationError;
 		} else {
 			ptrRingBuffer->indexRead  = 0;
-		  ptrRingBuffer->indexWrite = 0;
+		    ptrRingBuffer->indexWrite = 0;
 			ptrRingBuffer->fullness   = 0;
-			returnValue = ok;
+			ptrRingBuffer->packageAmounts = 0;
+			returnValue = ringbuff_ok;
 		}
 
 		return returnValue;
@@ -196,11 +200,10 @@ static uint8_t indexIncrement(uint8_t currentIndex,uint8_t sizeData, uint8_t max
 	uint8_t returnValue = currentIndex;
 
 	if(currentIndex + sizeData <= (maxValue - 1))
-		returnValue += sizeData ;
+		returnValue += sizeData;
 	else
-		returnValue=0;
+		returnValue = 0;
 
 	return returnValue;
 }
-
 
